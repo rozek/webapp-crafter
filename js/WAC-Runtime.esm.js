@@ -9437,8 +9437,8 @@ class WAC_DialogView extends Component {
         /**** repositioning on viewport ****/
         const { x: AppletX, y: AppletY, Width: AppletWidth, Height: AppletHeight } = Applet.Geometry;
         let { left, top } = fromDocumentTo('viewport', {
-            left: x + (fromRight ? AppletWidth : AppletX),
-            top: y + (fromBottom ? AppletHeight : AppletY)
+            left: x + (fromRight ? AppletWidth : 0),
+            top: y + (fromBottom ? AppletHeight : 0)
         });
         if (asDialog) {
             left = Math.max(0, Math.min(left, document.documentElement.clientWidth - 30));
