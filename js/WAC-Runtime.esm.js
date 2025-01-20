@@ -9130,8 +9130,9 @@ class WAC_AppletView extends Component {
             : html `<${WAC_PageView} Page=${visitedPage}/>`}
         ` : ''}
       </div>
-      ${Applet.isAttached && (openOverlays.length > 0) ? html `<div class="WAC OverlayLayer"
-      >
+      ${Applet.isAttached && (openOverlays.length > 0) ? html `<div class="WAC OverlayLayer" style="
+        ${OverlayCSSfromApplet(Applet)}
+      ">
         ${openOverlays.map((Overlay, Index) => html `
           ${(Index === lastOverlayIndex) && needsModalLayer ? html `<${WAC_ModalLayer}/>` : ''}
           <${WAC_AppletOverlayView} Applet=${Applet} Overlay=${Overlay}/>
@@ -9139,7 +9140,30 @@ class WAC_AppletView extends Component {
       </div>` : ''}`;
     }
 }
-//------------------------------------------------------------------------------
+/**** OverlayCSSfromApplet ****/
+function OverlayCSSfromApplet(Applet) {
+    let CSSStyleList = [];
+    const { FontFamily, FontSize, FontWeight, FontStyle, LineHeight, ForegroundColor, } = Applet;
+    if (FontFamily != null) {
+        CSSStyleList.push(`font-family:${FontFamily}`);
+    }
+    if (FontSize != null) {
+        CSSStyleList.push(`font-size:${FontSize}px`);
+    }
+    if (FontWeight != null) {
+        CSSStyleList.push(`font-weight:${FontWeight}`);
+    }
+    if (FontStyle != null) {
+        CSSStyleList.push(`font-style:${FontStyle}`);
+    }
+    if (LineHeight != null) {
+        CSSStyleList.push(`line-height:${LineHeight}px`);
+    }
+    if (ForegroundColor != null) {
+        CSSStyleList.push(`color:${ForegroundColor}`);
+    }
+    return (CSSStyleList.length === 0 ? '' : CSSStyleList.join(';') + ';');
+} //------------------------------------------------------------------------------
 //--                               WAC_PageView                               --
 //------------------------------------------------------------------------------
 class WAC_PageView extends Component {
