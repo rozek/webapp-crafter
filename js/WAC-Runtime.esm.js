@@ -3728,7 +3728,7 @@ export class WAC_Applet extends WAC_Visual {
                         return;
                     }
                     /**** scan all widgets shown on this one's overlays ****/
-                    const WidgetsToShow = (SourceWidget.normalizedBehavior === 'plain_controls.outline'
+                    const WidgetsToShow = (SourceWidget.normalizedBehavior === 'basic_controls.outline'
                         ? SourceWidget.bundledWidgets()
                         : [SourceWidget]).filter((Widget) => (Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Overlay))));
                     WidgetsToShow.forEach((Widget) => {
@@ -3751,7 +3751,7 @@ export class WAC_Applet extends WAC_Visual {
             if (SourceWidget == null) {
                 return;
             }
-            const WidgetsToShow = (SourceWidget.normalizedBehavior === 'plain_controls.outline'
+            const WidgetsToShow = (SourceWidget.normalizedBehavior === 'basic_controls.outline'
                 ? SourceWidget.bundledWidgets()
                 : [SourceWidget]).filter((Widget) => (Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Dialog))));
             WidgetsToShow.forEach((Widget) => {
@@ -4282,6 +4282,9 @@ export class WAC_Applet extends WAC_Visual {
             return;
         }
         const [Dialog] = this._DialogList.splice(DialogIndex, 1);
+        if (Dialog._View != null) {
+            Dialog._View._releaseWidgets();
+        }
         this.rerender();
         if (Dialog.onClose != null) {
             Dialog.onClose(Dialog);
@@ -6230,7 +6233,6 @@ function registerIntrinsicBehaviorsIn(Applet) {
             /**** _releaseWidgets - releases all widgets shown by this pane ****/
             _shownWidgets: [],
             _releaseWidgets: function () {
-                console.log('releasing all WidgetPane widgets', this._shownWidgets);
                 this._shownWidgets.forEach((Widget) => Widget._Pane = undefined);
             },
             componentWillUnmount: function () {
@@ -8261,13 +8263,19 @@ function registerIntrinsicBehaviorsIn(Applet) {
             return html `<select class="WAC Content DropDown"
         disabled=${Enabling == false} onInput=${_onInput}
       >${Options.map((Option) => {
-                const OptionValue = Option.replace(/:.*$/, '').trim();
+                let OptionValue = Option.replace(/:.*$/, '').trim();
                 let OptionLabel = Option.replace(/^[^:]+:/, '').trim();
                 const disabled = (OptionLabel[0] === '-');
-                if (/^-[^-]+$/.test(OptionLabel)) {
+                if (/^[-]+$/.test(OptionLabel)) {
                     return '<hr/>';
                 }
                 else {
+                    if (OptionValue === Option) {
+                        OptionValue = OptionValue.replace(/^-/, '');
+                    }
+                    if (disabled) {
+                        OptionLabel = OptionLabel.replace(/^-/, '');
+                    }
                     return html `<option value=${OptionValue}
               selected=${OptionValue === Value} disabled=${disabled}
             >${OptionLabel}</option>`;
@@ -8343,13 +8351,19 @@ function registerIntrinsicBehaviorsIn(Applet) {
         "></div>
         <select disabled=${Enabling == false} onInput=${_onInput}>
           ${Options.map((Option) => {
-                const OptionValue = Option.replace(/:.*\$/, '').trim();
+                let OptionValue = Option.replace(/:.*$/, '').trim();
                 let OptionLabel = Option.replace(/^[^:]+:/, '').trim();
                 const disabled = (OptionLabel[0] === '-');
-                if (/^-[^-]+$/.test(OptionLabel)) {
+                if (/^[-]+$/.test(OptionLabel)) {
                     return '<hr/>';
                 }
                 else {
+                    if (OptionValue === Option) {
+                        OptionValue = OptionValue.replace(/^-/, '');
+                    }
+                    if (disabled) {
+                        OptionLabel = OptionLabel.replace(/^-/, '');
+                    }
                     return html `<option value=${OptionValue}
                 selected=${OptionValue === Value} disabled=${disabled}
               >${OptionLabel}</option>`;
@@ -9005,6 +9019,7 @@ class WAC_combinedView extends Component {
     /**** render ****/
     render(PropSet) {
         const Applet = PropSet.Applet;
+        console.log('rendering...');
         let AppletRendering;
         try {
             AppletRendering = html `<${WAC_AppletView} Applet=${Applet}/>`;
@@ -9305,15 +9320,20 @@ class WAC_DialogView extends Component {
     /**** _releaseWidgets ****/
     _releaseWidgets() {
         this._shownWidgets.forEach((Widget) => {
-            if (Widget._Pane === this) {
+            if (Widget._Pane === this._Dialog) {
                 Widget._Pane = undefined;
             }
         });
         this._shownWidgets = [];
     }
+    /**** componentDidMount ****/
+    componentDidMount() {
+        this._Dialog._View = this;
+    }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
-        this._releaseWidgets();
+        //    this._releaseWidgets()  // may be too late, is therefore done when closing
+        delete this._Dialog._View;
     }
     /**** _GeometryRelativeTo  ****/
     _GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry) {
