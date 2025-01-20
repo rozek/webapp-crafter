@@ -272,11 +272,11 @@
     Cause:any
   }
 
-/**** Dialogs and Overlays ****/
+/**** Applet and Widget Overlays ****/
 
-  type WAC_Dialog = {
+  type WAC_AppletOverlay = {
     Name:WAC_Name, normalizedName:WAC_Name, SourceWidgetPath:WAC_Path,
-    asAppletOverlay?:boolean, fromRight?:boolean, fromBottom?:boolean,
+    asDialog?:boolean, fromRight?:boolean, fromBottom?:boolean,
     Title?:WAC_Textline,
     isModal:boolean, isClosable:boolean, isDraggable:boolean, isResizable:boolean,
     x:WAC_Location, y:WAC_Location, Width:WAC_Dimension, Height:WAC_Dimension,
@@ -286,7 +286,7 @@
     _View?:Component                                     // used internally only
   }
 
-  type WAC_Overlay = {
+  type WAC_WidgetOverlay = {
     Name:WAC_Name, normalizedName:WAC_Name, SourceWidgetPath:WAC_Path,
     isModal:boolean,
     x:WAC_Location, y:WAC_Location, Width:WAC_Dimension, Height:WAC_Dimension,
@@ -1138,7 +1138,7 @@
 
 /**** WAC Underlay ****/
 
-  .WAC.Underlay {
+  .WAC.WidgetUnderlay {
     display:block; position:fixed;
     left:0px; top:0px; right:auto; bottom:auto; width:100%; height:100%;
     pointer-events:auto;
@@ -1147,12 +1147,25 @@
     background:black; opacity:0.1;
   }
 
-/**** WAC DialogLayer ****/
+/**** WAC AppletOverlayLayer ****/
 
-  .WAC.DialogLayer {
+  .WAC.AppletOverlayLayer {
     display:block; position:absolute; overflow:visible;
     left:0px; top:0px; right:0px; bottom:0px; width:auto; height:auto;
     pointer-events:none;
+  }
+
+/**** AppletOverlay ****/
+
+  .WAC.AppletOverlay {
+    display:block; position:absolute;
+    z-index:1000000;
+    pointer-events:auto;
+  }
+  .WAC.AppletOverlay > .ContentPane {
+    display:block; position:absolute; overflow:visible;
+    left:0px; top:0px; right:0px; bottom:0px;
+    border:none;
   }
 
 /**** Dialog ****/
@@ -1165,6 +1178,8 @@
     z-index:1000000;
     pointer-events:auto;
   }
+
+/**** Dialog Components ****/
 
   .WAC.Dialog.withTitlebar > .Titlebar {
     display:block; position:absolute; overflow:hidden;
@@ -1245,30 +1260,17 @@
     -ms-touch-action:none; touch-action:none;
   }
 
-/**** AppletOverlay ****/
+/**** WAC WidgetOverlayLayer ****/
 
-  .WAC.AppletOverlay {
-    display:block; position:absolute;
-    z-index:1000000;
-    pointer-events:auto;
-  }
-  .WAC.AppletOverlay > .ContentPane {
-    display:block; position:absolute; overflow:visible;
-    left:0px; top:0px; right:0px; bottom:0px;
-    border:none;
-  }
-
-/**** WAC OverlayLayer ****/
-
-  .WAC.OverlayLayer {
+  .WAC.WidgetOverlayLayer {
     display:block; position:absolute; overflow:visible;
     left:0px; top:0px; right:0px; bottom:0px; width:auto; height:auto;
     pointer-events:none;
   }
 
-/**** Overlay ****/
+/**** WidgetOverlay ****/
 
-  .WAC.Overlay {
+  .WAC.WidgetOverlay {
     display:block; position:fixed;
     background:white; color:black;
     box-shadow:0px 0px 10px 0px rgba(0,0,0,0.5);
@@ -4314,7 +4316,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
             if (Widget._View == null) { return }
             if (Widget._View.contains(DOMElement)) { Candidate = Widget as WAC_Widget }
 
-            Widget._OverlayList.forEach((Overlay:WAC_Overlay) => {
+            Widget._OverlayList.forEach((Overlay:WAC_WidgetOverlay) => {
               const SourceWidget = this.WidgetAtPath(Overlay.SourceWidgetPath as WAC_Path)
               if (SourceWidget == null) { return }
 
@@ -4336,12 +4338,12 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
           })
         }
 
-      /**** scan all shown widgets on all currently open dialogs ****/
+      /**** scan all shown widgets on all currently open applet overlays ****/
 
-        this._DialogList.forEach((Dialog:Indexable) => {
-          if (Dialog._View == null) { return undefined }
+        this._OverlayList.forEach((Overlay:Indexable) => {
+          if (Overlay._View == null) { return undefined }
 
-          const SourceWidget = this.WidgetAtPath(Dialog.SourceWidgetPath as WAC_Path)
+          const SourceWidget = this.WidgetAtPath(Overlay.SourceWidgetPath as WAC_Path)
           if (SourceWidget == null) { return }
 
           const WidgetsToShow:WAC_Widget[] = (
@@ -4349,7 +4351,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
             ? (SourceWidget as Indexable).bundledWidgets()
             : [SourceWidget]
           ).filter((Widget:Indexable) => (
-            Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Dialog))
+            Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Overlay))
           ))
 
           WidgetsToShow.forEach((Widget:Indexable) => {
@@ -4903,80 +4905,84 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       return Page.Widget(PathItemList[1])
     }
 
-  /**** DialogNamed ****/
+  /**** OverlayNamed ****/
 
-    private _DialogList:WAC_Dialog[] = []
+    private _OverlayList:WAC_AppletOverlay[] = []
 
-    public DialogNamed (DialogName:WAC_Name):WAC_Dialog|undefined {
-      const DialogIndex = this.IndexOfDialog(DialogName)
-      return this._DialogList[DialogIndex]           // even if DialogIndex = -1
+    public OverlayNamed (OverlayName:WAC_Name):WAC_AppletOverlay|undefined {
+      const OverlayIndex = this.IndexOfOverlay(OverlayName)
+      return this._OverlayList[OverlayIndex]        // even if OverlayIndex = -1
     }
 
-  /**** existingDialogNamed ****/
+  /**** existingOverlayNamed ****/
 
-    public existingDialogNamed (DialogName:WAC_Name):WAC_Dialog {
-      const DialogIndex = this.IndexOfDialog(DialogName)
-      if (DialogIndex < 0) throwError(
-        `NotFound: no dialog named ${quoted(DialogName)} found`
+    public existingOverlayNamed (OverlayName:WAC_Name):WAC_AppletOverlay {
+      const OverlayIndex = this.IndexOfOverlay(OverlayName)
+      if (OverlayIndex < 0) throwError(
+        `NotFound: no overlay named ${quoted(OverlayName)} found`
       )
 
-      return this._DialogList[DialogIndex] as WAC_Dialog
+      return this._OverlayList[OverlayIndex] as WAC_AppletOverlay
     }
 
-  /**** IndexOfDialog ****/
+  /**** IndexOfOverlay ****/
 
-    public IndexOfDialog (DialogName:WAC_Name):number {
-      expectName('dialog name',DialogName)
-      const normalizedName = DialogName.toLowerCase()
+    public IndexOfOverlay (OverlayName:WAC_Name):number {
+      expectName('overlay name',OverlayName)
+      const normalizedName = OverlayName.toLowerCase()
 
-      return this._DialogList.findIndex(
-        (Dialog:WAC_Dialog) => Dialog.normalizedName === normalizedName
+      return this._OverlayList.findIndex(
+        (Overlay:WAC_AppletOverlay) => Overlay.normalizedName === normalizedName
       )
     }
 
-  /**** openDialog ****/
+  /**** openOverlay ****/
 
-    public openDialog (Descriptor:Indexable):void {
-      expectPlainObject('dialog descriptor',Descriptor)
-        expectName              ('dialog name',Descriptor.Name)
-        allowBoolean            ('dialog mode',Descriptor.asAppletOverlay)
-        allowBoolean   ('right anchor setting',Descriptor.fromRight)
-        allowBoolean  ('bottom anchor setting',Descriptor.fromBottom)
-        allowTextline          ('dialog title',Descriptor.Title)
-        allowBoolean        ('dialog modality',Descriptor.isModal)
-        allowBoolean     ('dialog closability',Descriptor.isClosable)
-        allowBoolean    ('dialog draggability',Descriptor.isDraggable)
-        allowBoolean    ('dialog resizability',Descriptor.isResizable)
-        allowLocation   ('dialog x coordinate',Descriptor.x)
-        allowLocation   ('dialog y coordinate',Descriptor.y)
-        allowDimension         ('dialog width',Descriptor.Width)
-        allowDimension        ('dialog height',Descriptor.Height)
-        allowDimension ('minimal dialog width',Descriptor.minWidth)
-        allowDimension ('maximal dialog width',Descriptor.maxWidth)
-        allowDimension('minimal dialog height',Descriptor.minHeight)
-        allowDimension('maximal dialog height',Descriptor.maxHeight)
-        allowFunction     ('"onOpen" callback',Descriptor.onOpen)
-        allowFunction    ('"onClose" callback',Descriptor.onClose)
+    public openOverlay (Descriptor:Indexable):void {
+      expectPlainObject('overlay descriptor',Descriptor)
+        expectName              ('overlay name',Descriptor.Name)
+        allowBoolean            ('overlay mode',Descriptor.asDialog)
+        allowBoolean    ('right anchor setting',Descriptor.fromRight)
+        allowBoolean   ('bottom anchor setting',Descriptor.fromBottom)
+        allowTextline           ('dialog title',Descriptor.Title)
+        allowBoolean         ('dialog modality',Descriptor.isModal)
+        allowBoolean      ('dialog closability',Descriptor.isClosable)
+        allowBoolean     ('dialog draggability',Descriptor.isDraggable)
+        allowBoolean     ('dialog resizability',Descriptor.isResizable)
+        allowLocation   ('overlay x coordinate',Descriptor.x)
+        allowLocation   ('overlay y coordinate',Descriptor.y)
+        allowDimension         ('overlay width',Descriptor.Width)
+        allowDimension        ('overlay height',Descriptor.Height)
+        allowDimension ('minimal overlay width',Descriptor.minWidth)
+        allowDimension ('maximal overlay width',Descriptor.maxWidth)
+        allowDimension('minimal overlay height',Descriptor.minHeight)
+        allowDimension('maximal overlay height',Descriptor.maxHeight)
+        allowFunction      ('"onOpen" callback',Descriptor.onOpen)
+        allowFunction     ('"onClose" callback',Descriptor.onClose)
       let {
-        Name, asAppletOverlay, fromRight, fromBottom,
+        Name, asDialog, fromRight, fromBottom,
         Title, isModal, isClosable, isDraggable, isResizable,
         x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
         onOpen,onClose
       } = Descriptor
 
-      if (this.DialogIsOpen(Descriptor.Name)) throwError(
-        `AlreadyOpen: a dialog named ${quoted(Descriptor.Name)} is already open`
+      if (this.OverlayIsOpen(Descriptor.Name)) throwError(
+        `AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`
       )
 
-      if (asAppletOverlay == null) { asAppletOverlay = false }
-      const asDialog = ! asAppletOverlay
+      if (asDialog == null) { asDialog = false }
+      if (isModal  == null) { isModal  = false }
 
-      if (isModal     == null) { isModal     = false }
-      if (isClosable  == null) { isClosable  = asDialog }
-      if (isDraggable == null) { isDraggable = asDialog }
-      if (isResizable == null) { isResizable = false }
-      if (Title == null) {
-        if (isClosable || isDraggable) { Title = Name }
+      if (asDialog) {
+        if (isClosable  == null) { isClosable  = true }
+        if (isDraggable == null) { isDraggable = true }
+        if (isResizable == null) { isResizable = false }
+        if (Title == null) {
+          if (isClosable || isDraggable) { Title = Name }
+        }
+      } else {
+        Title = undefined
+        isClosable = isDraggable = isResizable = false
       }
 
       if (minWidth  == null) { minWidth  = 0 }
@@ -5021,128 +5027,148 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
 //    x = Math.max(0, Math.min(x, this.Width-Width))
 //    y = Math.max(0, Math.min(y,this.Height-Height))
 
-      const Dialog:WAC_Dialog = {
+      const Overlay:WAC_AppletOverlay = {
         Name, normalizedName:Name.toLowerCase(), SourceWidgetPath,
-        asAppletOverlay, fromRight, fromBottom,
+        asDialog, fromRight, fromBottom,
         Title, isModal, isClosable, isDraggable, isResizable,
         x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
         onOpen,onClose
       }
 
-      this._DialogList.push(Dialog)
+      this._OverlayList.push(Overlay)
       this.rerender()
 
-      if (Dialog.onOpen != null) { Dialog.onOpen(Dialog) }
+      if (Overlay.onOpen != null) { Overlay.onOpen(Overlay) }
     }
 
-  /**** closeDialog ****/
+  /**** closeOverlay ****/
 
-    public closeDialog (DialogName:WAC_Name):void {
-      const DialogIndex = this.IndexOfDialog(DialogName)
-      if (DialogIndex < 0) { return }
+    public closeOverlay (OverlayName:WAC_Name):void {
+      const OverlayIndex = this.IndexOfOverlay(OverlayName)
+      if (OverlayIndex < 0) { return }
 
-      const [ Dialog ] = this._DialogList.splice(DialogIndex,1)
-      if (Dialog._View != null) { Dialog._View._releaseWidgets() }
+      const [ Overlay ] = this._OverlayList.splice(OverlayIndex,1)
+      if (Overlay._View != null) { Overlay._View._releaseWidgets() }
 
       this.rerender()
 
-      if (Dialog.onClose != null) { Dialog.onClose(Dialog) }
+      if (Overlay.onClose != null) { Overlay.onClose(Overlay) }
     }
 
-  /**** closeAllDialogs ****/
+  /**** closeAllOverlays ****/
 
-    public closeAllDialogs ():void {
-      if (this._DialogList.length > 0) {
-        this._DialogList.forEach(
-          (Dialog:WAC_Dialog) => this.closeDialog(Dialog.Name)
+    public closeAllOverlays ():void {
+      if (this._OverlayList.length > 0) {
+        this._OverlayList.forEach(
+          (Overlay:WAC_AppletOverlay) => this.closeOverlay(Overlay.Name)
         )
       }
     }
 
-  /**** DialogIsOpen ****/
+  /**** OverlayIsOpen ****/
 
-    public DialogIsOpen (DialogName:WAC_Name):boolean {
-      return (this.DialogNamed(DialogName) != null)
+    public OverlayIsOpen (OverlayName:WAC_Name):boolean {
+      return (this.OverlayNamed(OverlayName) != null)
     }
 
-  /**** openDialogs ****/
+  /**** openOverlays ****/
 
-    public openDialogs ():WAC_Name[] {
-      return this._DialogList.map((Dialog:WAC_Dialog) => Dialog.Name)
+    public openOverlays ():WAC_Name[] {
+      return this._OverlayList.map((Overlay:WAC_AppletOverlay) => Overlay.Name)
     }
 
-  /**** GeometryOfDialog ****/
+  /**** GeometryOfOverlay ****/
 
-    public GeometryOfDialog (DialogName:WAC_Name):WAC_Geometry {
-      const Dialog = this.existingDialogNamed(DialogName)
-      const { x,y, Width,Height } = Dialog
+    public GeometryOfOverlay (OverlayName:WAC_Name):WAC_Geometry {
+      const Overlay = this.existingOverlayNamed(OverlayName)
+      const { x,y, Width,Height } = Overlay
       return { x,y, Width,Height }
     }
 
-  /**** moveDialogBy ****/
+  /**** moveOverlayBy ****/
 
-    public moveDialogBy (DialogName:WAC_Name, dx:number,dy:number):void {
-      const Dialog = this.existingDialogNamed(DialogName)
+    public moveOverlayBy (OverlayName:WAC_Name, dx:number,dy:number):void {
+      const Overlay = this.existingOverlayNamed(OverlayName)
 
       expectNumber('dx',dx)
       expectNumber('dy',dy)
 
-      this.moveDialogTo(DialogName, Dialog.x+dx,Dialog.y+dy)              // DRY
+      this.moveOverlayTo(OverlayName, Overlay.x+dx,Overlay.y+dy)          // DRY
     }
 
-  /**** moveDialogTo ****/
+  /**** moveOverlayTo ****/
 
-    public moveDialogTo (DialogName:WAC_Name, x:WAC_Location,y:WAC_Location):void {
-      const Dialog = this.existingDialogNamed(DialogName)
+    public moveOverlayTo (OverlayName:WAC_Name, x:WAC_Location,y:WAC_Location):void {
+      const Overlay = this.existingOverlayNamed(OverlayName)
 
       expectLocation('x coordinate',x)
       expectLocation('y coordinate',y)
 
-      Dialog.x = x
-      Dialog.y = y
+      Overlay.x = x
+      Overlay.y = y
 
       this.rerender()
     }
 
-  /**** sizeDialogBy ****/
+  /**** sizeOverlayBy ****/
 
-    public sizeDialogBy (DialogName:WAC_Name, dW:number,dH:number):void {
-      const Dialog = this.existingDialogNamed(DialogName)
+    public sizeOverlayBy (OverlayName:WAC_Name, dW:number,dH:number):void {
+      const Overlay = this.existingOverlayNamed(OverlayName)
 
       expectNumber('dW',dW)
       expectNumber('dH',dH)
 
-      this.sizeDialogTo(DialogName, Dialog.Width+dW,Dialog.Height+dH)     // DRY
+      this.sizeOverlayTo(OverlayName, Overlay.Width+dW,Overlay.Height+dH) // DRY
     }
 
-  /**** sizeDialogTo ****/
+  /**** sizeOverlayTo ****/
 
-    public sizeDialogTo (
-      DialogName:WAC_Name, Width:WAC_Dimension,Height:WAC_Dimension
+    public sizeOverlayTo (
+      OverlayName:WAC_Name, Width:WAC_Dimension,Height:WAC_Dimension
     ):void {
-      const Dialog = this.existingDialogNamed(DialogName)
+      const Overlay = this.existingOverlayNamed(OverlayName)
 
       expectDimension ('Width',Width)
       expectDimension('Height',Height)
 
-      Dialog.Width  = Math.max(Dialog.minWidth  || 0, Math.min(Width,  Dialog.maxWidth  || Infinity))
-      Dialog.Height = Math.max(Dialog.minHeight || 0, Math.min(Height, Dialog.maxHeight || Infinity))
+      Overlay.Width  = Math.max(Overlay.minWidth  || 0, Math.min(Width,  Overlay.maxWidth  || Infinity))
+      Overlay.Height = Math.max(Overlay.minHeight || 0, Math.min(Height, Overlay.maxHeight || Infinity))
 
       this.rerender()
     }
 
-  /**** bringDialogToFront ****/
+  /**** bringOverlayToFront ****/
 
-    public bringDialogToFront (DialogName:WAC_Name):void {
-      const Index = this.IndexOfDialog(DialogName)
+    public bringOverlayToFront (OverlayName:WAC_Name):void {
+      const Index = this.IndexOfOverlay(OverlayName)
       if (Index < 0) throwError(
-        `NotFound: no dialog named ${quoted(DialogName)} found`
+        `NotFound: no overlay named ${quoted(OverlayName)} found`
       )
 
-      const [ Dialog ] = this._DialogList.splice(Index,1)
-      this._DialogList.push(Dialog)
+      const [ Overlay ] = this._OverlayList.splice(Index,1)
+      this._OverlayList.push(Overlay)
 
       this.rerender()
+    }
+
+  /**** openDialog ****/
+
+    public openDialog (Descriptor:Indexable):void {
+      expectPlainObject('dialog descriptor',Descriptor)
+        Descriptor.asDialog = true
+      return this.openOverlay(Descriptor)
+    }
+
+  /**** closeDialog ****/
+
+    public closeDialog (OverlayName:WAC_Name):void {
+      this.closeOverlay(OverlayName)
+    }
+
+  /**** DialogIsOpen ****/
+
+    public DialogIsOpen (OverlayName:WAC_Name):boolean {
+      return this.OverlayIsOpen(OverlayName)
     }
 
   /**** Serialization ****/
@@ -5929,7 +5955,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       super(Behavior,Page)
     }
 
-    private _Pane:WAC_Page|WAC_Widget|WAC_Dialog|WAC_Overlay|undefined
+    private _Pane:WAC_Page|WAC_Widget|WAC_AppletOverlay|WAC_WidgetOverlay|undefined
                                // avoids multiple renderings at different places
 
   /**** Category ****/
@@ -6847,22 +6873,22 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
 
   /**** OverlayNamed ****/
 
-    private _OverlayList:WAC_Overlay[] = []
+    private _OverlayList:WAC_WidgetOverlay[] = []
 
-    public OverlayNamed (OverlayName:WAC_Name):WAC_Overlay|undefined {
+    public OverlayNamed (OverlayName:WAC_Name):WAC_WidgetOverlay|undefined {
       const OverlayIndex = this.IndexOfOverlay(OverlayName)
       return this._OverlayList[OverlayIndex]        // even if OverlayIndex = -1
     }
 
   /**** existingOverlayNamed ****/
 
-    public existingOverlayNamed (OverlayName:WAC_Name):WAC_Overlay {
+    public existingOverlayNamed (OverlayName:WAC_Name):WAC_WidgetOverlay {
       const OverlayIndex = this.IndexOfOverlay(OverlayName)
       if (OverlayIndex < 0) throwError(
         `NotFound: no overlay named ${quoted(OverlayName)} found`
       )
 
-      return this._OverlayList[OverlayIndex] as WAC_Overlay
+      return this._OverlayList[OverlayIndex] as WAC_WidgetOverlay
     }
 
   /**** IndexOfOverlay ****/
@@ -6872,7 +6898,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       const normalizedName = OverlayName.toLowerCase()
 
       return this._OverlayList.findIndex(
-        (Overlay:WAC_Overlay) => Overlay.normalizedName === normalizedName
+        (Overlay:WAC_WidgetOverlay) => Overlay.normalizedName === normalizedName
       )
     }
 
@@ -6890,8 +6916,8 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
         allowDimension ('maximal overlay width',Descriptor.maxWidth)
         allowDimension('minimal overlay height',Descriptor.minHeight)
         allowDimension('maximal overlay height',Descriptor.maxHeight)
-        allowFunction     ('"onOpen" callback',Descriptor.onOpen)
-        allowFunction    ('"onClose" callback',Descriptor.onClose)
+        allowFunction      ('"onOpen" callback',Descriptor.onOpen)
+        allowFunction     ('"onClose" callback',Descriptor.onClose)
       let {
         Name, Title, isModal,
         x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
@@ -6941,7 +6967,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       Width  = Math.max(minWidth  || 0, Math.min(Width, maxWidth  || Infinity))
       Height = Math.max(minHeight || 0, Math.min(Height,maxHeight || Infinity))
 
-      const Overlay:WAC_Overlay = {
+      const Overlay:WAC_WidgetOverlay = {
         Name, normalizedName:Name.toLowerCase(), SourceWidgetPath,
         isModal,
         x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
@@ -6971,7 +6997,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     public closeAllOverlays ():void {
       if (this._OverlayList.length > 0) {
         this._OverlayList.forEach(
-          (Overlay:WAC_Overlay) => this.closeOverlay(Overlay.Name)
+          (Overlay:WAC_WidgetOverlay) => this.closeOverlay(Overlay.Name)
         )
       }
     }
@@ -6985,7 +7011,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
   /**** openOverlays ****/
 
     public openOverlays ():WAC_Name[] {
-      return this._OverlayList.map((Overlay:WAC_Overlay) => Overlay.Name)
+      return this._OverlayList.map((Overlay:WAC_WidgetOverlay) => Overlay.Name)
     }
 
   /**** GeometryOfOverlay ****/
@@ -11048,15 +11074,15 @@ console.log('rendering...')
   /**** render ****/
 // rendering sequence
 // - Applet -> visitedPage -> Widgets [-> Widgets in case of WidgetPanes]
-// - openDialogs -> SourceWidget [-> Widgets in case of WidgetPanes]
+// - openOverlays -> SourceWidget [-> Widgets in case of WidgetPanes]
 
     public render (PropSet:Indexable):any {
-      const Applet          = this._Applet = PropSet.Applet as WAC_Applet
-      const visitedPage     = Applet.visitedPage
-      const openDialogs     = (Applet as Indexable)._DialogList
-      const lastDialogIndex = openDialogs.length-1
-      const needsModalLayer = (openDialogs.length > 0) &&
-                              openDialogs[lastDialogIndex].isModal
+      const Applet           = this._Applet = PropSet.Applet as WAC_Applet
+      const visitedPage      = Applet.visitedPage
+      const openOverlays     = (Applet as Indexable)._OverlayList
+      const lastOverlayIndex = openOverlays.length-1
+      const needsModalLayer  = (openOverlays.length > 0) &&
+                               openOverlays[lastOverlayIndex].isModal
 
       const broken = (Applet.isBroken ? 'broken' : '')
 
@@ -11072,10 +11098,11 @@ console.log('rendering...')
           }
         ` : '' }
       </div>
-      ${Applet.isAttached && (openDialogs.length > 0) ? html`<div class="WAC DialogLayer">
-        ${openDialogs.map((Dialog:WAC_Dialog, Index:number) => html`
-          ${(Index === lastDialogIndex) && needsModalLayer ? html`<${WAC_ModalLayer}/>` : ''}
-          <${WAC_DialogView} Applet=${Applet} Dialog=${Dialog}/>
+      ${Applet.isAttached && (openOverlays.length > 0) ? html`<div class="WAC OverlayLayer"
+      >
+        ${openOverlays.map((Overlay:WAC_AppletOverlay, Index:number) => html`
+          ${(Index === lastOverlayIndex) && needsModalLayer ? html`<${WAC_ModalLayer}/>` : ''}
+          <${WAC_AppletOverlayView} Applet=${Applet} Overlay=${Overlay}/>
         `)}
       </div>`: ''}`
     }
@@ -11227,12 +11254,12 @@ console.log('rendering...')
       ${(broken === '') && (openOverlays.length > 0) ? html`<div class="WAC OverlayLayer"
         style="${CSSGeometry}"
       >
-        ${openOverlays.map((Overlay:WAC_Overlay, Index:number) => html`
+        ${openOverlays.map((Overlay:WAC_WidgetOverlay, Index:number) => html`
           ${(Index === lastOverlayIndex)
-            ? html`<${WAC_Underlay} Widget=${Widget} Overlay=${Overlay}/>`
+            ? html`<${WAC_WidgetUnderlay} Widget=${Widget} Overlay=${Overlay}/>`
             : ''
           }
-          <${WAC_OverlayView} Widget=${Widget} Overlay=${Overlay}/>
+          <${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>
         `)}
       </div>`: ''}`
     }
@@ -11272,14 +11299,14 @@ console.log('rendering...')
   }
 
 //------------------------------------------------------------------------------
-//--                              WAC_DialogView                              --
+//--                          WAC_AppletOverlayView                           --
 //------------------------------------------------------------------------------
 
-  class WAC_DialogView extends Component {
+  class WAC_AppletOverlayView extends Component {
 // @ts-ignore TS2564 will be initialized in renderer
     protected _Applet:WAC_Applet
 // @ts-ignore TS2564 will be initialized in renderer
-    protected _Dialog:WAC_Dialog
+    protected _Overlay:WAC_AppletOverlay
 
     protected _DragInfo:Indexable = {
       Mode:undefined,
@@ -11291,7 +11318,7 @@ console.log('rendering...')
 
     protected _releaseWidgets ():void {
       this._shownWidgets.forEach((Widget:Indexable) => {
-        if (Widget._Pane === this._Dialog) { Widget._Pane = undefined }
+        if (Widget._Pane === this._Overlay) { Widget._Pane = undefined }
       })
       this._shownWidgets = []
     }
@@ -11299,14 +11326,14 @@ console.log('rendering...')
   /**** componentDidMount ****/
 
     public componentDidMount ():void {
-      this._Dialog._View = this
+      this._Overlay._View = this
     }
 
   /**** componentWillUnmount ****/
 
     public componentWillUnmount ():void {
 //    this._releaseWidgets()  // may be too late, is therefore done when closing
-      delete this._Dialog._View
+      delete this._Overlay._View
     }
 
   /**** _GeometryRelativeTo  ****/
@@ -11368,17 +11395,17 @@ console.log('rendering...')
         this._resizeDialog(dx,dy)
       }
 
-      this._Applet.bringDialogToFront(this._Dialog.Name)
+      this._Applet.bringOverlayToFront(this._Overlay.Name)
       rerender()
     }
 
     protected _moveDialog (dx:number,dy:number):void {
-      this._Dialog.x = this._DragInfo.initialGeometry.x + dx
-      this._Dialog.y = this._DragInfo.initialGeometry.y + dy
+      this._Overlay.x = this._DragInfo.initialGeometry.x + dx
+      this._Overlay.y = this._DragInfo.initialGeometry.y + dy
     }
 
     protected _resizeDialog (dx:number,dy:number):void {
-      const Dialog   = this._Dialog
+      const Dialog   = this._Overlay
       const DragInfo = this._DragInfo
 
       const { minWidth,maxWidth, minHeight,maxHeight } = Dialog
@@ -11421,7 +11448,7 @@ console.log('rendering...')
             default:                                  this._DragInfo.Mode = 'drag'
           }
 
-          const { x,y, Width,Height } = this._Dialog
+          const { x,y, Width,Height } = this._Overlay
           this._DragInfo.initialGeometry = { x,y, Width,Height }
 
           this._handleDrag(dx,dy)
@@ -11437,17 +11464,17 @@ console.log('rendering...')
     public render (PropSet:Indexable):any {
       this._releaseWidgets()
 
-      const { Applet, Dialog } = PropSet
-        this._Applet = Applet
-        this._Dialog = Dialog
+      const { Applet, Overlay } = PropSet
+        this._Applet  = Applet
+        this._Overlay = Overlay
       const {
         SourceWidgetPath,
-        asAppletOverlay, fromRight, fromBottom,
+        asDialog, fromRight, fromBottom,
         Title, isClosable, isDraggable, isResizable,
         x,y, Width,Height,
-      } = Dialog
+      } = Overlay
 
-    /**** leave here if dialog should not be shown... ****/
+    /**** leave here if overlay should not be shown... ****/
 
       const SourceWidget = Applet.WidgetAtPath(SourceWidgetPath as WAC_Path)
 
@@ -11459,8 +11486,6 @@ console.log('rendering...')
       if (Visibility === false) { return '' }
 
     /**** ...otherwise continue as usual ****/
-
-      const asDialog = ! asAppletOverlay
 
       const hasTitlebar = asDialog && (
         (Title != null) || isDraggable || isClosable
@@ -11494,7 +11519,7 @@ console.log('rendering...')
       let Recognizer = this._Recognizer
 
       const onClose = () => {
-        Applet.closeDialog(Dialog.Name)
+        Applet.closeOverlay(Overlay.Name)
       }
 
     /**** ContentPane Rendering ****/
@@ -11508,9 +11533,9 @@ console.log('rendering...')
             ? (SourceWidget as Indexable).bundledWidgets()
             : [SourceWidget]
           ).filter((Widget:Indexable) => (
-            Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Dialog))
+            Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Overlay))
           ))
-            WidgetsToShow.forEach((Widget:Indexable) => Widget._Pane = Dialog)
+            WidgetsToShow.forEach((Widget:Indexable) => Widget._Pane = Overlay)
           this._shownWidgets = WidgetsToShow
         }
       const PaneGeometry = { x,y, Width,Height }
@@ -11530,7 +11555,7 @@ console.log('rendering...')
         }
       )
 
-    /**** actual dialog rendering ****/
+    /**** actual overlay rendering ****/
 
       if (asDialog) {
         return html`<div class="WAC ${resizable} Dialog ${withTitlebar}" style="
@@ -11575,10 +11600,10 @@ console.log('rendering...')
   }
 
 //------------------------------------------------------------------------------
-//--                               WAC_Underlay                               --
+//--                            WAC_WidgetUnderlay                            --
 //------------------------------------------------------------------------------
 
-  const WAC_Underlay_EventTypes = [
+  const WAC_WidgetUnderlay_EventTypes = [
     'click', 'dblclick',
     /*'mousedown',*/ 'mouseup', 'mousemove', 'mouseover', 'mouseout',
     'mouseenter', 'mouseleave',
@@ -11589,15 +11614,15 @@ console.log('rendering...')
     'wheel', 'contextmenu', 'focus', 'blur'
   ]
 
-  class WAC_Underlay extends Component {
+  class WAC_WidgetUnderlay extends Component {
     public componentDidMount () {
-      WAC_Underlay_EventTypes.forEach((EventType:string) => {
+      WAC_WidgetUnderlay_EventTypes.forEach((EventType:string) => {
         (this as Component).base.addEventListener(EventType,consumeEvent)
       })
     }
 
     public componentWillUnmount () {
-      WAC_Underlay_EventTypes.forEach((EventType:string) => {
+      WAC_WidgetUnderlay_EventTypes.forEach((EventType:string) => {
         (this as Component).base.removeEventListener(EventType,consumeEvent)
       })
     }
@@ -11612,7 +11637,7 @@ console.log('rendering...')
 
       const modal = (Overlay.isModal ? 'modal' : '')
 
-      return html`<div class="WAC ${modal} Underlay"
+      return html`<div class="WAC ${modal} WidgetUnderlay"
         onMouseDown=${handleEvent} onPointerDown=${handleEvent}
         onTouchStart=${handleEvent}
       />`
@@ -11620,10 +11645,10 @@ console.log('rendering...')
   }
 
 //------------------------------------------------------------------------------
-//--                             WAC_OverlayView                              --
+//--                          WAC_WidgetOverlayView                           --
 //------------------------------------------------------------------------------
 
-  class WAC_OverlayView extends Component {
+  class WAC_WidgetOverlayView extends Component {
     protected _shownWidgets:WAC_Widget[] = []
 
   /**** _releaseWidgets ****/
@@ -11742,7 +11767,7 @@ console.log('rendering...')
 
     /**** actual overlay rendering ****/
 
-      return html`<div class="WAC Overlay" style="
+      return html`<div class="WAC WidgetOverlay" style="
         left:${left}px; top:${top}px; width:${Width}px; height:${Height}px;
       ">
         ${ContentPane}
