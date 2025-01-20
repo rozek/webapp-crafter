@@ -4469,14 +4469,26 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     protected _toBeCentered:boolean = true
 
     public get toBeCentered ():boolean  { return this._toBeCentered }
-    public set toBeCentered (_:boolean) { throwReadOnlyError('toBeCentered') }
+    public set toBeCentered (newSetting:boolean) {
+      expectBoolean('viewport centering setting',newSetting)
+      if (this._toBeCentered !== newSetting) {
+        this._toBeCentered = newSetting
+//      this.rerender()
+      }
+    }
 
   /**** withMobileFrame ****/
 
     protected _withMobileFrame:boolean = false
 
     public get withMobileFrame ():boolean  { return this._withMobileFrame }
-    public set withMobileFrame (_:boolean) { throwReadOnlyError('withMobileFrame') }
+    public set withMobileFrame (newSetting:boolean) {
+      expectBoolean('mobile frame setting',newSetting)
+      if (this._withMobileFrame !== newSetting) {
+        this._withMobileFrame = newSetting
+//      this.rerender()
+      }
+    }
 
   /**** expectedOrientation ****/
 
