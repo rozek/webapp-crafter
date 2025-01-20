@@ -3840,9 +3840,21 @@ export class WAC_Applet extends WAC_Visual {
         throwReadOnlyError('maxHeight');
     }
     get toBeCentered() { return this._toBeCentered; }
-    set toBeCentered(_) { throwReadOnlyError('toBeCentered'); }
+    set toBeCentered(newSetting) {
+        expectBoolean('viewport centering setting', newSetting);
+        if (this._toBeCentered !== newSetting) {
+            this._toBeCentered = newSetting;
+            //      this.rerender()
+        }
+    }
     get withMobileFrame() { return this._withMobileFrame; }
-    set withMobileFrame(_) { throwReadOnlyError('withMobileFrame'); }
+    set withMobileFrame(newSetting) {
+        expectBoolean('mobile frame setting', newSetting);
+        if (this._withMobileFrame !== newSetting) {
+            this._withMobileFrame = newSetting;
+            //      this.rerender()
+        }
+    }
     get expectedOrientation() { return this._expectedOrientation; }
     set expectedOrientation(_) { throwReadOnlyError('expectedOrientation'); }
     /**** x/y ****/
