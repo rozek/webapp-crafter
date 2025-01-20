@@ -638,6 +638,11 @@ if (WACStyleElement == null) {
     display:block; position:absolute; overflow:visible;
     left:0px; top:0px; right:0px; bottom:0px; width:auto; height:auto;
     pointer-events:none;
+
+    color:black;
+    font-family:'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
+    font-size:14px; font-weight:400; line-height:1.4; color:black;
+    text-align:left; text-shadow:none;
   }
 
 /**** AppletOverlay ****/
@@ -9130,7 +9135,7 @@ class WAC_AppletView extends Component {
             : html `<${WAC_PageView} Page=${visitedPage}/>`}
         ` : ''}
       </div>
-      ${Applet.isAttached && (openOverlays.length > 0) ? html `<div class="WAC OverlayLayer" style="
+      ${Applet.isAttached && (openOverlays.length > 0) ? html `<div class="WAC AppletOverlayLayer" style="
         ${OverlayCSSfromApplet(Applet)}
       ">
         ${openOverlays.map((Overlay, Index) => html `
