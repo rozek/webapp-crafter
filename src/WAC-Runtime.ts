@@ -282,7 +282,8 @@
     x:WAC_Location, y:WAC_Location, Width:WAC_Dimension, Height:WAC_Dimension,
     minWidth?:WAC_Dimension, minHeight?:WAC_Dimension,
     maxWidth?:WAC_Dimension, maxHeight?:WAC_Dimension,
-    onOpen?:Function, onClose?:Function
+    onOpen?:Function, onClose?:Function,
+    _View?:Component                                     // used internally only
   }
 
   type WAC_Overlay = {
@@ -4320,7 +4321,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
             /**** scan all widgets shown on this one's overlays ****/
 
               const WidgetsToShow:WAC_Widget[] = (
-                SourceWidget.normalizedBehavior === 'plain_controls.outline'
+                SourceWidget.normalizedBehavior === 'basic_controls.outline'
                 ? (SourceWidget as Indexable).bundledWidgets()
                 : [SourceWidget]
               ).filter((Widget:Indexable) => (
@@ -4344,7 +4345,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
           if (SourceWidget == null) { return }
 
           const WidgetsToShow:WAC_Widget[] = (
-            SourceWidget.normalizedBehavior === 'plain_controls.outline'
+            SourceWidget.normalizedBehavior === 'basic_controls.outline'
             ? (SourceWidget as Indexable).bundledWidgets()
             : [SourceWidget]
           ).filter((Widget:Indexable) => (
@@ -5029,6 +5030,8 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       if (DialogIndex < 0) { return }
 
       const [ Dialog ] = this._DialogList.splice(DialogIndex,1)
+      if (Dialog._View != null) { Dialog._View._releaseWidgets() }
+
       this.rerender()
 
       if (Dialog.onClose != null) { Dialog.onClose(Dialog) }
@@ -7352,7 +7355,6 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     _shownWidgets:[] as WAC_Widget[],
 
     _releaseWidgets: function ():void {
-console.log('releasing all WidgetPane widgets',this._shownWidgets)
       this._shownWidgets.forEach((Widget:Indexable) => Widget._Pane = undefined)
     },
 
@@ -10056,12 +10058,15 @@ console.warn('file drop error',Signal)
       return html`<select class="WAC Content DropDown"
         disabled=${Enabling == false} onInput=${_onInput}
       >${Options.map((Option:string) => {
-          const OptionValue = Option.replace(/:.*$/,'').trim()
+          let   OptionValue = Option.replace(/:.*$/,'').trim()
           let   OptionLabel = Option.replace(/^[^:]+:/,'').trim()
           const disabled    = (OptionLabel[0] === '-')
-          if (/^-[^-]+$/.test(OptionLabel)) {
+          if (/^[-]+$/.test(OptionLabel)) {
             return '<hr/>'
           } else {
+            if (OptionValue === Option) { OptionValue = OptionValue.replace(/^-/,'') }
+            if (disabled)               { OptionLabel = OptionLabel.replace(/^-/,'') }
+
             return html`<option value=${OptionValue}
               selected=${OptionValue === Value} disabled=${disabled}
             >${OptionLabel}</option>`
@@ -10157,12 +10162,15 @@ console.warn('file drop error',Signal)
         "></div>
         <select disabled=${Enabling == false} onInput=${_onInput}>
           ${Options.map((Option:string) => {
-            const OptionValue = Option.replace(/:.*\$/,'').trim()
+            let   OptionValue = Option.replace(/:.*$/,'').trim()
             let   OptionLabel = Option.replace(/^[^:]+:/,'').trim()
             const disabled    = (OptionLabel[0] === '-')
-            if (/^-[^-]+$/.test(OptionLabel)) {
+            if (/^[-]+$/.test(OptionLabel)) {
               return '<hr/>'
             } else {
+              if (OptionValue === Option) { OptionValue = OptionValue.replace(/^-/,'') }
+              if (disabled)               { OptionLabel = OptionLabel.replace(/^-/,'') }
+
               return html`<option value=${OptionValue}
                 selected=${OptionValue === Value} disabled=${disabled}
               >${OptionLabel}</option>`
@@ -10966,6 +10974,7 @@ console.warn('file drop error',Signal)
 
     public render (PropSet:Indexable):any {
       const Applet = PropSet.Applet as WAC_Applet
+console.log('rendering...')
 
       let AppletRendering:any
         try {
@@ -11270,15 +11279,22 @@ console.warn('file drop error',Signal)
 
     protected _releaseWidgets ():void {
       this._shownWidgets.forEach((Widget:Indexable) => {
-        if (Widget._Pane === this) { Widget._Pane = undefined }
+        if (Widget._Pane === this._Dialog) { Widget._Pane = undefined }
       })
       this._shownWidgets = []
+    }
+
+  /**** componentDidMount ****/
+
+    public componentDidMount ():void {
+      this._Dialog._View = this
     }
 
   /**** componentWillUnmount ****/
 
     public componentWillUnmount ():void {
-      this._releaseWidgets()
+//    this._releaseWidgets()  // may be too late, is therefore done when closing
+      delete this._Dialog._View
     }
 
   /**** _GeometryRelativeTo  ****/
