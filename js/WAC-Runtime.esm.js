@@ -9436,13 +9436,15 @@ class WAC_DialogView extends Component {
         const withTitlebar = (asDialog && hasTitlebar ? 'withTitlebar' : '');
         /**** repositioning on viewport ****/
         const { x: AppletX, y: AppletY, Width: AppletWidth, Height: AppletHeight } = Applet.Geometry;
-        let { left, top } = fromDocumentTo('viewport', {
+        let { left, top } = {
             left: x + (fromRight ? AppletWidth : 0),
             top: y + (fromBottom ? AppletHeight : 0)
-        });
+        };
         if (asDialog) {
-            left = Math.max(0, Math.min(left, document.documentElement.clientWidth - 30));
-            top = Math.max(0, Math.min(top, document.documentElement.clientHeight - 30));
+            let minX = -AppletX, maxX = document.documentElement.clientWidth - 30 - AppletX;
+            let minY = -AppletY, maxY = document.documentElement.clientHeight - 30 - AppletY;
+            left = Math.max(minX, Math.min(left, maxX));
+            top = Math.max(minY, Math.min(top, maxY));
         }
         else {
             left = Math.max(0, Math.min(left, AppletWidth));
