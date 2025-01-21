@@ -6808,7 +6808,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
 
   /**** Offsets ****/
 
-    protected _Offsets:WAC_Offsets = [0,20, 0,20]
+    protected _Offsets:WAC_Offsets = [10,30, 10,30]
 
     public get Offsets ():WAC_Offsets {
       return this._Offsets.slice() as WAC_Offsets
@@ -8200,9 +8200,8 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      const { Enabling, /*Icon,*/Color } = this
-
-      const IconURL  = this.Applet.AssetURL(this.Icon)
+      const { Enabling, Icon,Color } = this
+      const IconURL  = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/circle-information.png' : this.Icon)
       const disabled = (Enabling == false)
 
       const _onClick = (Event:any) => {
@@ -9755,9 +9754,8 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      const IconURL = this.Applet.AssetURL(this.Icon)
-
-      const { Enabling, /*Icon,*/Color, allowMultiple, acceptableFileTypes } = this
+      const { Enabling, Icon,Color, allowMultiple, acceptableFileTypes } = this
+      const IconURL = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/arrow-up-from-bracket.png' : this.Icon)
 
       const _onInput = async (Event:any):Promise<void> => {
         if (this.Enabling == false) { return consumingEvent(Event) }
@@ -10189,9 +10187,8 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      const IconURL = this.Applet.AssetURL(this.Icon)
-
-      const { Value,Enabling, /*Icon,*/Color, Options } = this
+      const { Value,Enabling, Icon,Color, Options } = this
+      const IconURL = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/drop-down.png' : this.Icon)
 
       const _onInput = (Event:any) => {
         if (Enabling === false) { return consumingEvent(Event) }
@@ -10708,9 +10705,8 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      const { Enabling, isActive, /*Icon,*/Color } = this
-
-      const IconURL  = this.Applet.AssetURL(this.Icon)
+      const { Enabling, isActive, Icon,Color } = this
+      const IconURL  = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/circle-information.png' : this.Icon)
       const disabled = (Enabling == false)
 
       const onClick = (Event:any) => {
