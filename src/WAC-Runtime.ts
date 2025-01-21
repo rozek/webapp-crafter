@@ -1017,9 +1017,9 @@
 
   let DesignerAssetsBase:WAC_URL = 'https://rozek.github.io/webapp-crafter/'
 
-/**** ValueIsAbsoluteURL ****/
+/**** URLhasSchema ****/
 
-  export function ValueIsAbsoluteURL (Value:any):boolean {
+  export function URLhasSchema (Value:any):boolean {
     return ValueIsURL(Value) && ValueIsStringMatching(Value,/^[a-z][a-z0-9+.-]*:\/\//i)
   }
 
@@ -3707,6 +3707,20 @@ console.warn('finished tracking asynchronous callback ' + quoted(CallbackName))
       if (this._AssetsBase !== newURL) {
         this._AssetsBase = newURL
         this.rerender()
+      }
+    }
+
+  /**** AssetURL ****/
+
+    public AssetURL (relativeURL:WAC_URL):WAC_URL {
+      expectURL('asset URL',relativeURL)
+
+      switch (true) {
+        case URLhasSchema(relativeURL):
+          return relativeURL
+        case relativeURL.startsWith('/'):
+          return this._AssetsBase + relativeURL.replace(/^\/+/,'')
+        default: return this._AssetsBase + relativeURL
       }
     }
 
@@ -7840,10 +7854,7 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      let ImageURL = this.Value
-      if (! ValueIsAbsoluteURL(ImageURL)) {
-        ImageURL = this.Applet.AssetsBase + ImageURL
-      }
+      const ImageURL = this.Applet.AssetURL(this.Value)
 
       const { ImageScaling,ImageAlignment, Enabling,readonly } = this
 
@@ -8007,10 +8018,7 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      let WebURL = this.Value
-      if (! ValueIsAbsoluteURL(WebURL)) {
-        WebURL = this.Applet.AssetsBase + WebURL
-      }
+      const WebURL = this.Applet.AssetURL(this.Value)
 
       const {
         PermissionsPolicy,allowsFullscreen,SandboxPermissions,ReferrerPolicy
@@ -8186,13 +8194,9 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      let IconURL = this.Icon
-      if (! ValueIsAbsoluteURL(IconURL)) {
-        IconURL = this.Applet.AssetsBase + IconURL
-      }
-
       const { Enabling, /*Icon,*/Color } = this
 
+      const IconURL  = this.Applet.AssetURL(this.Icon)
       const disabled = (Enabling == false)
 
       const _onClick = (Event:any) => {
@@ -9745,10 +9749,7 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      let IconURL = this.Icon
-      if (! ValueIsAbsoluteURL(IconURL)) {
-        IconURL = this.Applet.AssetsBase + IconURL
-      }
+      const IconURL = this.Applet.AssetURL(this.Icon)
 
       const { Enabling, /*Icon,*/Color, allowMultiple, acceptableFileTypes } = this
 
@@ -10182,10 +10183,7 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      let IconURL = this.Icon
-      if (! ValueIsAbsoluteURL(IconURL)) {
-        IconURL = this.Applet.AssetsBase + IconURL
-      }
+      const IconURL = this.Applet.AssetURL(this.Icon)
 
       const { Value,Enabling, /*Icon,*/Color, Options } = this
 
@@ -10704,13 +10702,9 @@ console.warn('file drop error',Signal)
   /**** Renderer ****/
 
     onRender(function (this:Indexable) {
-      let IconURL = this.Icon
-      if (! ValueIsAbsoluteURL(IconURL)) {
-        IconURL = this.Applet.AssetsBase + IconURL
-      }
-
       const { Enabling, isActive, /*Icon,*/Color } = this
 
+      const IconURL  = this.Applet.AssetURL(this.Icon)
       const disabled = (Enabling == false)
 
       const onClick = (Event:any) => {
@@ -11526,11 +11520,12 @@ console.log('rendering...')
       }
 
       if (asDialog) {
-        let minX = -AppletX, maxX = document.documentElement.clientWidth-30  - AppletX
-        let minY = -AppletY, maxY = document.documentElement.clientHeight-30 - AppletY
+        ;({ left,top } = fromDocumentTo('viewport',{
+          left:left+AppletX, top:top+AppletY
+        }))
 
-        left = Math.max(minX,Math.min(left,maxX))
-        top  = Math.max(minY,Math.min(top,maxY))
+        left = Math.max(0,Math.min(left,document.documentElement.clientWidth-30))
+        top  = Math.max(0,Math.min(top,document.documentElement.clientHeight-30))
       } else {
         left = Math.max(0,Math.min(left,AppletWidth))
         top  = Math.max(0,Math.min(top,AppletHeight))
@@ -11561,7 +11556,7 @@ console.log('rendering...')
             WidgetsToShow.forEach((Widget:Indexable) => Widget._Pane = Overlay)
           this._shownWidgets = WidgetsToShow
         }
-      const PaneGeometry = { x,y, Width,Height }
+      const PaneGeometry = { x,y, Width:Width-2,Height:Height-2 }
         if (hasTitlebar) { PaneGeometry.Height -= 30 }
         if (isResizable) { PaneGeometry.Height -= 10 }
         PaneGeometry.Height = Math.max(0,PaneGeometry.Height)
@@ -11571,9 +11566,15 @@ console.log('rendering...')
         : SourceWidget.Geometry
       )
 
+      let ContentPaneIsTooSmall = false       // browsers are not precise enough
       let ContentPane:any[] = (this._shownWidgets as any).toReversed().map(
         (Widget:WAC_Widget) => {
           let Geometry = this._GeometryOfWidgetRelativeTo(Widget,BaseGeometry,PaneGeometry)
+            const { x,y, Width,Height } = Geometry
+            if (
+              (x < 0) || (x+Width  > PaneGeometry.Width) ||
+              (y < 0) || (y+Height > PaneGeometry.Height)
+            ) { ContentPaneIsTooSmall = true }
           return html`<${WAC_WidgetView} Widget=${Widget} Geometry=${Geometry}/>`
         }
       )
@@ -11591,11 +11592,13 @@ console.log('rendering...')
             <div class="Title">${Title}</div>
 
             ${(isClosable) && html`
-              <img class="CloseButton" src="${Applet.AssetsBase}/icons/xmark.png" onClick=${onClose}/>
+              <img class="CloseButton" src="${Applet.AssetURL('/icons/xmark.png')}" onClick=${onClose}/>
             `}
           </div>`}
 
-          <div class="ContentPane">${ContentPane}</div>
+          <div class="ContentPane" style="
+            overflow:${ContentPaneIsTooSmall ? 'auto' : 'hidden'}"
+          >${ContentPane}</div>
 
           ${isResizable && html`
             <div class="leftResizer"
