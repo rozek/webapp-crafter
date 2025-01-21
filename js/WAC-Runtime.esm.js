@@ -17,7 +17,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 const WAC_Version = '0.1';
 import { ObjectMergedWith as Object_assign, 
 //  throwError,
-quoted, escaped, ValuesAreEqual, ValuesDiffer, ValueIsBoolean, ValueIsNumber, ValueIsFiniteNumber, ValueIsNumberInRange, ValueIsInteger, ValueIsIntegerInRange, ValueIsOrdinal, ValueIsCardinal, ValueIsString, ValueIsStringMatching, ValueIsText, ValueIsTextline, ValueIsObject, ValueIsPlainObject, ValueIsList, ValueIsListSatisfying, ValueIsFunction, ValueIsOneOf, ValueIsColor, ValueIsEMailAddress, /*ValueIsPhoneNumber,*/ ValueIsURL, ValidatorForClassifier, acceptNil, rejectNil, allowBoolean, expectBoolean, expectNumber, allowFiniteNumber, allowInteger, expectInteger, allowIntegerInRange, allowOrdinal, expectCardinal, expectString, allowText, expectText, allowTextline, expectTextline, expectPlainObject, expectList, allowListSatisfying, expectListSatisfying, allowFunction, expectFunction, allowOneOf, expectOneOf, allowColor, allowURL, expectURL, HexColor, } from 'javascript-interface-library';
+quoted, escaped, ValuesAreEqual, ValuesDiffer, ValueIsBoolean, ValueIsNumber, ValueIsFiniteNumber, ValueIsNumberInRange, ValueIsInteger, ValueIsIntegerInRange, ValueIsOrdinal, ValueIsCardinal, ValueIsString, ValueIsStringMatching, ValueIsText, ValueIsTextline, ValueIsObject, ValueIsPlainObject, ValueIsList, ValueIsListSatisfying, ValueIsFunction, ValueIsOneOf, ValueIsColor, ValueIsEMailAddress, /*ValueIsPhoneNumber,*/ ValueIsURL, ValidatorForClassifier, acceptNil, rejectNil, allowBoolean, expectBoolean, expectNumber, allowFiniteNumber, allowInteger, expectInteger, allowIntegerInRange, allowOrdinal, expectCardinal, expectString, allowText, expectText, allowTextline, expectTextline, expectPlainObject, allowList, expectList, allowListSatisfying, expectListSatisfying, allowFunction, expectFunction, allowOneOf, expectOneOf, allowColor, allowURL, expectURL, HexColor, } from 'javascript-interface-library';
 import * as JIL from 'javascript-interface-library';
 const ValueIsPhoneNumber = ValueIsTextline; // *C* should be implemented
 import { render, html, Component, createRef, useRef, useEffect, useCallback } from 'htm/preact';
@@ -84,6 +84,7 @@ export const WAC_ErrorTypes = [
     '"Value" Setting Failure', 'Rendering Failure',
     'Callback Failure', 'Reactivity Failure',
 ];
+/**** throwError - simplifies construction of named errors ****/
 export function throwError(Message) {
     let Match = /^([$a-zA-Z][$a-zA-Z0-9]*):\s*(\S.+)\s*$/.exec(Message);
     if (Match == null) {
@@ -4194,117 +4195,9 @@ export class WAC_Applet extends WAC_Visual {
     }
     /**** openOverlay ****/
     openOverlay(Descriptor) {
-        expectPlainObject('overlay descriptor', Descriptor);
-        expectName('overlay name', Descriptor.Name);
-        allowBoolean('overlay mode', Descriptor.asDialog);
-        allowBoolean('right anchor setting', Descriptor.fromRight);
-        allowBoolean('bottom anchor setting', Descriptor.fromBottom);
-        allowTextline('dialog title', Descriptor.Title);
-        allowBoolean('dialog modality', Descriptor.isModal);
-        allowBoolean('dialog closability', Descriptor.isClosable);
-        allowBoolean('dialog draggability', Descriptor.isDraggable);
-        allowBoolean('dialog resizability', Descriptor.isResizable);
-        allowLocation('overlay x coordinate', Descriptor.x);
-        allowLocation('overlay y coordinate', Descriptor.y);
-        allowDimension('overlay width', Descriptor.Width);
-        allowDimension('overlay height', Descriptor.Height);
-        allowDimension('minimal overlay width', Descriptor.minWidth);
-        allowDimension('maximal overlay width', Descriptor.maxWidth);
-        allowDimension('minimal overlay height', Descriptor.minHeight);
-        allowDimension('maximal overlay height', Descriptor.maxHeight);
-        allowFunction('"onOpen" callback', Descriptor.onOpen);
-        allowFunction('"onClose" callback', Descriptor.onClose);
-        let { Name, asDialog, fromRight, fromBottom, Title, isModal, isClosable, isDraggable, isResizable, x, y, Width, Height, minWidth, maxWidth, minHeight, maxHeight, onOpen, onClose } = Descriptor;
         if (this.OverlayIsOpen(Descriptor.Name))
             throwError(`AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`);
-        if (asDialog == null) {
-            asDialog = false;
-        }
-        if (isModal == null) {
-            isModal = false;
-        }
-        if (asDialog) {
-            if (isClosable == null) {
-                isClosable = true;
-            }
-            if (isDraggable == null) {
-                isDraggable = true;
-            }
-            if (isResizable == null) {
-                isResizable = false;
-            }
-            if (Title == null) {
-                if (isClosable || isDraggable) {
-                    Title = Name;
-                }
-            }
-        }
-        else {
-            Title = undefined;
-            isClosable = isDraggable = isResizable = false;
-        }
-        if (minWidth == null) {
-            minWidth = 0;
-        }
-        if (minHeight == null) {
-            minHeight = 0;
-        }
-        let SourceWidget, SourceWidgetPath;
-        switch (true) {
-            case null:
-            case undefined:
-                throwError('MissingArgument: no source widget path given');
-            case ValueIsPath(Descriptor.SourceWidget):
-                SourceWidgetPath = Descriptor.SourceWidget;
-                SourceWidget = this.WidgetAtPath(SourceWidgetPath);
-                if (SourceWidget == null)
-                    throwError(`NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`);
-                break;
-            case ValueIsWidget(Descriptor.SourceWidget):
-                SourceWidget = Descriptor.SourceWidget;
-                SourceWidgetPath = SourceWidget.Path;
-                break;
-            default:
-                throwError('InvalidArgument: the given source widget is neither a widget ' +
-                    'nor a widget path');
-        }
-        if ((Width == null) || (Height == null)) {
-            let SourceGeometry = SourceWidget.Geometry;
-            if (Width == null) {
-                Width = SourceGeometry.Width;
-            }
-            if (Height == null) {
-                Height = SourceGeometry.Height;
-            }
-        }
-        if (isClosable) {
-            minWidth = Math.max(30 + 10, minWidth);
-        }
-        if ((Title != null) || isClosable || isDraggable) {
-            Height += 30;
-            minHeight += 30;
-        }
-        if (isResizable) {
-            Height += 10;
-            minHeight += 10;
-        }
-        Width = Math.max(minWidth || 0, Math.min(Width, maxWidth || Infinity));
-        Height = Math.max(minHeight || 0, Math.min(Height, maxHeight || Infinity));
-        if (x == null) {
-            x = (this.Width - Width) / 2;
-        }
-        if (y == null) {
-            y = (this.Height - Height) / 2;
-        }
-        //    x = Math.max(0, Math.min(x, this.Width-Width))
-        //    y = Math.max(0, Math.min(y,this.Height-Height))
-        const Overlay = {
-            Name, normalizedName: Name.toLowerCase(), SourceWidgetPath,
-            asDialog, fromRight, fromBottom,
-            Title, isModal, isClosable, isDraggable, isResizable,
-            x, y, Width, Height, minWidth, maxWidth, minHeight, maxHeight,
-            onOpen, onClose
-        };
+        const Overlay = new WAC_AppletOverlay(this, Descriptor);
         this._OverlayList.push(Overlay);
         this.rerender();
         if (Overlay.onOpen != null) {
@@ -4318,6 +4211,7 @@ export class WAC_Applet extends WAC_Visual {
             return;
         }
         const [Overlay] = this._OverlayList.splice(OverlayIndex, 1);
+        // @ts-ignore TS2445 I know, it's a hack, but allow access to protected members here
         if (Overlay._View != null) {
             Overlay._View._releaseWidgets();
         }
@@ -4344,6 +4238,7 @@ export class WAC_Applet extends WAC_Visual {
     GeometryOfOverlay(OverlayName) {
         const Overlay = this.existingOverlayNamed(OverlayName);
         const { x, y, Width, Height } = Overlay;
+        // @ts-ignore TS2322 "x" and "y2 are no longer undefined here
         return { x, y, Width, Height };
     }
     /**** moveOverlayBy ****/
@@ -4351,6 +4246,7 @@ export class WAC_Applet extends WAC_Visual {
         const Overlay = this.existingOverlayNamed(OverlayName);
         expectNumber('dx', dx);
         expectNumber('dy', dy);
+        // @ts-ignore TS2322 "x" and "y2 are no longer undefined here
         this.moveOverlayTo(OverlayName, Overlay.x + dx, Overlay.y + dy); // DRY
     }
     /**** moveOverlayTo ****/
@@ -4389,9 +4285,14 @@ export class WAC_Applet extends WAC_Visual {
     }
     /**** openDialog ****/
     openDialog(Descriptor) {
-        expectPlainObject('dialog descriptor', Descriptor);
-        Descriptor.asDialog = true;
-        return this.openOverlay(Descriptor);
+        if (this.OverlayIsOpen(Descriptor.Name))
+            throwError(`AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`);
+        const Dialog = new WAC_Dialog(this, Descriptor);
+        this._OverlayList.push(Dialog);
+        this.rerender();
+        if (Dialog.onOpen != null) {
+            Dialog.onOpen(Dialog);
+        }
     }
     /**** closeDialog ****/
     closeDialog(OverlayName) {
@@ -5894,6 +5795,58 @@ export class WAC_Widget extends WAC_Visual {
             this.rerender();
         }
     }
+    /**** Overlay - which Overlay contains this widget? ****/
+    get Overlay() {
+        const View = this.View;
+        if (View == null) {
+            return undefined;
+        }
+        const OverlayElement = View.closest('.WAC.AppletOverlay,.WAC.Dialog,.WAC.WidgetOverlay');
+        if (OverlayElement == null) {
+            return undefined;
+        }
+        return OverlayElement['_Overlay'];
+    }
+    set Overlay(_) { throwReadOnlyError('Overlay'); }
+    /**** AppletOverlay - which AppletOverlay contains this widget? ****/
+    get AppletOverlay() {
+        const View = this.View;
+        if (View == null) {
+            return undefined;
+        }
+        const OverlayElement = View.closest('.WAC.AppletOverlay,.WAC.Dialog');
+        if (OverlayElement == null) {
+            return undefined;
+        }
+        return OverlayElement['_Overlay'];
+    }
+    set AppletOverlay(_) { throwReadOnlyError('AppletOverlay'); }
+    /**** Dialog - which AppletOverlay contains this widget? ****/
+    get Dialog() {
+        const View = this.View;
+        if (View == null) {
+            return undefined;
+        }
+        const OverlayElement = View.closest('.WAC.Dialog');
+        if (OverlayElement == null) {
+            return undefined;
+        }
+        return OverlayElement['_Overlay'];
+    }
+    set Dialog(_) { throwReadOnlyError('Dialog'); }
+    /**** WidgetOverlay - which WidgetOverlay contains this widget? ****/
+    get WidgetOverlay() {
+        const View = this.View;
+        if (View == null) {
+            return undefined;
+        }
+        const OverlayElement = View.closest('.WAC.WidgetOverlay');
+        if (OverlayElement == null) {
+            return undefined;
+        }
+        return OverlayElement['_Overlay'];
+    }
+    set WidgetOverlay(_) { throwReadOnlyError('WidgetOverlay'); }
     OverlayNamed(OverlayName) {
         const OverlayIndex = this.IndexOfOverlay(OverlayName);
         return this._OverlayList[OverlayIndex]; // even if OverlayIndex = -1
@@ -5913,74 +5866,9 @@ export class WAC_Widget extends WAC_Visual {
     }
     /**** openOverlay ****/
     openOverlay(Descriptor) {
-        var _a;
-        expectPlainObject('overlay descriptor', Descriptor);
-        expectName('overlay name', Descriptor.Name);
-        allowBoolean('overlay modality', Descriptor.isModal);
-        allowLocation('overlay x coordinate', Descriptor.x);
-        allowLocation('overlay y coordinate', Descriptor.y);
-        allowDimension('overlay width', Descriptor.Width);
-        allowDimension('overlay height', Descriptor.Height);
-        allowDimension('minimal overlay width', Descriptor.minWidth);
-        allowDimension('maximal overlay width', Descriptor.maxWidth);
-        allowDimension('minimal overlay height', Descriptor.minHeight);
-        allowDimension('maximal overlay height', Descriptor.maxHeight);
-        allowFunction('"onOpen" callback', Descriptor.onOpen);
-        allowFunction('"onClose" callback', Descriptor.onClose);
-        let { Name, Title, isModal, x, y, Width, Height, minWidth, maxWidth, minHeight, maxHeight, onOpen, onClose } = Descriptor;
         if (this.OverlayIsOpen(Descriptor.Name))
             throwError(`AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`);
-        if (isModal == null) {
-            isModal = false;
-        }
-        if (x == null) {
-            x = 0;
-        }
-        if (y == null) {
-            y = 0;
-        }
-        if (minWidth == null) {
-            minWidth = 0;
-        }
-        if (minHeight == null) {
-            minHeight = 0;
-        }
-        let SourceWidget, SourceWidgetPath;
-        switch (true) {
-            case null:
-            case undefined:
-                throwError('MissingArgument: no source widget path given');
-            case ValueIsPath(Descriptor.SourceWidget):
-                SourceWidgetPath = Descriptor.SourceWidget;
-                SourceWidget = (_a = this.Applet) === null || _a === void 0 ? void 0 : _a.WidgetAtPath(SourceWidgetPath);
-                if (SourceWidget == null)
-                    throwError(`NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`);
-                break;
-            case ValueIsWidget(Descriptor.SourceWidget):
-                SourceWidget = Descriptor.SourceWidget;
-                SourceWidgetPath = SourceWidget.Path;
-                break;
-            default:
-                throwError('InvalidArgument: the given source widget is neither a widget ' +
-                    'nor a widget path');
-        }
-        if ((Width == null) || (Height == null)) {
-            let SourceGeometry = SourceWidget.Geometry;
-            if (Width == null) {
-                Width = SourceGeometry.Width;
-            }
-            if (Height == null) {
-                Height = SourceGeometry.Height;
-            }
-        }
-        Width = Math.max(minWidth || 0, Math.min(Width, maxWidth || Infinity));
-        Height = Math.max(minHeight || 0, Math.min(Height, maxHeight || Infinity));
-        const Overlay = {
-            Name, normalizedName: Name.toLowerCase(), SourceWidgetPath,
-            isModal,
-            x, y, Width, Height, minWidth, maxWidth, minHeight, maxHeight,
-            onOpen, onClose
-        };
+        const Overlay = new WAC_WidgetOverlay(this, Descriptor);
         this._OverlayList.push(Overlay);
         this.rerender();
         if (Overlay.onOpen != null) {
@@ -5994,6 +5882,10 @@ export class WAC_Widget extends WAC_Visual {
             return;
         }
         const [Overlay] = this._OverlayList.splice(OverlayIndex, 1);
+        // @ts-ignore TS2445 I know, it's a hack, but allow access to protected members here
+        if (Overlay._View != null) {
+            Overlay._View._releaseWidgets();
+        }
         this.rerender();
         if (Overlay.onClose != null) {
             Overlay.onClose(Overlay);
@@ -6114,6 +6006,606 @@ export class WAC_Widget extends WAC_Visual {
         ].forEach((Name) => deserializeProperty(Name));
         /**** common properties including "activeScript" ****/
         super._deserializeConfigurationFrom(Serialization);
+    }
+}
+//------------------------------------------------------------------------------
+//--                            WAC_AppletOverlay                             --
+//------------------------------------------------------------------------------
+class WAC_AppletOverlay {
+    constructor(Applet, Descriptor) {
+        Object.defineProperty(this, "_Applet", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_View", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Name", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_normalizedName", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_isModal", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Anchoring", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_x", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Width", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_y", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Height", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_minWidth", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_maxWidth", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_minHeight", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_maxHeight", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_SourceWidgetPath", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_onOpen", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_onClose", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        expectApplet('overlay applet', Applet);
+        this._Applet = Applet;
+        expectPlainObject('overlay descriptor', Descriptor);
+        expectName('overlay name', Descriptor.Name);
+        allowBoolean('overlay modality', Descriptor.isModal);
+        allowList('anchoring', Descriptor.Anchoring);
+        allowLocation('overlay x coordinate', Descriptor.x);
+        allowLocation('overlay y coordinate', Descriptor.y);
+        allowDimension('overlay width', Descriptor.Width);
+        allowDimension('overlay height', Descriptor.Height);
+        allowDimension('minimal overlay width', Descriptor.minWidth);
+        allowDimension('maximal overlay width', Descriptor.maxWidth);
+        allowDimension('minimal overlay height', Descriptor.minHeight);
+        allowDimension('maximal overlay height', Descriptor.maxHeight);
+        allowFunction('"onOpen" callback', Descriptor.onOpen);
+        allowFunction('"onClose" callback', Descriptor.onClose);
+        let { Name, isModal, Anchoring, x, y, Width, Height, minWidth, maxWidth, minHeight, maxHeight, onOpen, onClose } = Descriptor;
+        if (Anchoring != null) {
+            expectOneOf('horizontal anchoring', Anchoring[0], ['left', 'right']);
+            expectOneOf('vertical anchoring', Anchoring[1], ['top', 'bottom']);
+        }
+        this._Name = Name;
+        this._normalizedName = Name.toLowerCase();
+        this._isModal = (isModal || false);
+        this._Anchoring = (Anchoring == null ? ['left', 'top'] : Anchoring.slice(0, 2));
+        this._minWidth = Math.max(0, minWidth || 0);
+        this._maxWidth = maxWidth;
+        this._minHeight = Math.max(0, minHeight || 0);
+        this._maxHeight = maxHeight;
+        this._x = x;
+        this._onOpen = onOpen;
+        this._y = y;
+        this._onClose = onClose;
+        let SourceWidget, SourceWidgetPath;
+        switch (true) {
+            case Descriptor.SourceWidget == null:
+                throwError('MissingArgument: no source widget path given');
+            case ValueIsPath(Descriptor.SourceWidget):
+                SourceWidgetPath = Descriptor.SourceWidget;
+                SourceWidget = Applet.WidgetAtPath(SourceWidgetPath);
+                if (SourceWidget == null)
+                    throwError(`NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`);
+                break;
+            case ValueIsWidget(Descriptor.SourceWidget):
+                SourceWidget = Descriptor.SourceWidget;
+                SourceWidgetPath = SourceWidget.Path;
+                break;
+            default:
+                throwError('InvalidArgument: the given source widget is neither a widget ' +
+                    'nor a widget path');
+        }
+        this._SourceWidgetPath = SourceWidgetPath;
+        if ((Width == null) || (Height == null)) {
+            let SourceGeometry = SourceWidget.Geometry;
+            if (Width == null) {
+                Width = SourceGeometry.Width;
+            }
+            if (Height == null) {
+                Height = SourceGeometry.Height;
+            }
+        }
+        this._Width = Math.max(this._minWidth, Math.min(Width, maxWidth || Infinity));
+        this._Height = Math.max(this._minHeight, Math.min(Height, maxHeight || Infinity));
+    }
+    /**** Applet ****/
+    get Applet() { return this._Applet; }
+    set Applet(_) { throwReadOnlyError('Applet'); }
+    /**** Name ****/
+    get Name() { return this._Name; }
+    set Name(_) { throwReadOnlyError('Name'); }
+    /**** normalizedName ****/
+    get normalizedName() { return this._normalizedName; }
+    set normalizedName(_) { throwReadOnlyError('normalizedName'); }
+    /**** isModal ****/
+    get isModal() { return this._isModal; }
+    set isModal(_) { throwReadOnlyError('isModal'); }
+    /**** Anchoring ****/
+    get Anchoring() { return this._Anchoring.slice(); }
+    set Anchoring(_) { throwReadOnlyError('Anchoring'); }
+    /**** SourceWidgetPath ****/
+    get SourceWidgetPath() { return this._SourceWidgetPath; }
+    set SourceWidgetPath(_) { throwReadOnlyError('SourceWidgetPath'); }
+    /**** onOpen ****/
+    get onOpen() { return this._onOpen; }
+    set onOpen(_) { throwReadOnlyError('onOpen'); }
+    /**** onClose ****/
+    get onClose() { return this._onClose; }
+    set onClose(_) { throwReadOnlyError('onClose'); }
+    /**** x ****/
+    get x() { return this._x; }
+    set x(newX) {
+        allowLocation('overlay x position', newX);
+        if (this._x !== newX) {
+            this._x = newX;
+            this._Applet.rerender();
+        }
+    }
+    /**** y ****/
+    get y() { return this._y; }
+    set y(newY) {
+        allowLocation('overlay y position', newY);
+        if (this._y !== newY) {
+            this._y = newY;
+            this._Applet.rerender();
+        }
+    }
+    /**** Width ****/
+    get Width() { return this._Width; }
+    set Width(newWidth) {
+        expectDimension('overlay width', newWidth);
+        if (this._Width !== newWidth) {
+            this._Width = newWidth;
+            this._Applet.rerender();
+        }
+    }
+    /**** Height ****/
+    get Height() { return this._Height; }
+    set Height(newHeight) {
+        expectDimension('overlay height', newHeight);
+        if (this._Height !== newHeight) {
+            this._Height = newHeight;
+            this._Applet.rerender();
+        }
+    }
+    /**** minWidth ****/
+    get minWidth() { return this._minWidth; }
+    set minWidth(newValue) {
+        expectDimension('minimal overlay width', newValue);
+        if (this._minWidth !== newValue) {
+            this._minWidth = newValue;
+            this._Applet.rerender();
+        }
+    }
+    /**** maxWidth ****/
+    get maxWidth() { return this._maxWidth; }
+    set maxWidth(newValue) {
+        allowDimension('maximal overlay width', newValue);
+        if (this._maxWidth !== newValue) {
+            this._maxWidth = newValue;
+            this._Applet.rerender();
+        }
+    }
+    /**** minHeight ****/
+    get minHeight() { return this._minHeight; }
+    set minHeight(newValue) {
+        expectDimension('minimal overlay height', newValue);
+        if (this._minHeight !== newValue) {
+            this._minHeight = newValue;
+            this._Applet.rerender();
+        }
+    }
+    /**** maxHeight ****/
+    get maxHeight() { return this._maxHeight; }
+    set maxHeight(newValue) {
+        allowDimension('maximal overlay height', newValue);
+        if (this._maxHeight !== newValue) {
+            this._maxHeight = newValue;
+            this._Applet.rerender();
+        }
+    }
+    /**** close ****/
+    close() {
+        this._Applet.closeOverlay(this._Name);
+    }
+}
+//------------------------------------------------------------------------------
+//--                                WAC_Dialog                                --
+//------------------------------------------------------------------------------
+class WAC_Dialog extends WAC_AppletOverlay {
+    constructor(Applet, Descriptor) {
+        super(Applet, Descriptor);
+        Object.defineProperty(this, "_Title", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_isClosable", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_isDraggable", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_isResizable", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        allowTextline('dialog title', Descriptor.Title);
+        allowBoolean('dialog closability', Descriptor.isClosable);
+        allowBoolean('dialog draggability', Descriptor.isDraggable);
+        allowBoolean('dialog resizability', Descriptor.isResizable);
+        let { Title, isClosable, isDraggable, isResizable } = Descriptor;
+        this._isClosable = (isClosable || false);
+        this._isDraggable = (isDraggable || false);
+        this._isResizable = (isResizable || false);
+        if (Title == null) {
+            if (isClosable || isDraggable) {
+                Title = this._Name;
+            }
+        }
+        this._Title = Title;
+        /**** allow room for dialog decoration ****/
+        if (isClosable) {
+            this._minWidth = Math.max(30 + 10, this._minWidth);
+        }
+        if ((Title != null) || isClosable || isDraggable) {
+            this._Height += 30;
+            this._minHeight += 30;
+        }
+        if (isResizable) {
+            this._Height += 10;
+            this._minHeight += 10;
+        }
+    }
+    /**** Title ****/
+    get Title() { return this._Title; }
+    set Title(_) { throwReadOnlyError('Title'); }
+    /**** isClosable ****/
+    get isClosable() { return this._isClosable; }
+    set isClosable(_) { throwReadOnlyError('isClosable'); }
+    /**** isDraggable ****/
+    get isDraggable() { return this._isDraggable; }
+    set isDraggable(_) { throwReadOnlyError('isDraggable'); }
+    /**** isResizable ****/
+    get isResizable() { return this._isResizable; }
+    set isResizable(_) { throwReadOnlyError('isResizable'); }
+}
+//------------------------------------------------------------------------------
+//--                            WAC_WidgetOverlay                             --
+//------------------------------------------------------------------------------
+class WAC_WidgetOverlay {
+    constructor(Widget, Descriptor) {
+        var _a;
+        Object.defineProperty(this, "_Widget", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_View", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Name", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_normalizedName", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_isModal", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_x", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Width", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_y", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_Height", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_minWidth", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_maxWidth", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_minHeight", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_maxHeight", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_SourceWidgetPath", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_onOpen", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "_onClose", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        expectWidget('overlay widget', Widget);
+        this._Widget = Widget;
+        expectPlainObject('overlay descriptor', Descriptor);
+        expectName('overlay name', Descriptor.Name);
+        allowBoolean('overlay modality', Descriptor.isModal);
+        allowLocation('overlay x coordinate', Descriptor.x);
+        allowLocation('overlay y coordinate', Descriptor.y);
+        allowDimension('overlay width', Descriptor.Width);
+        allowDimension('overlay height', Descriptor.Height);
+        allowDimension('minimal overlay width', Descriptor.minWidth);
+        allowDimension('maximal overlay width', Descriptor.maxWidth);
+        allowDimension('minimal overlay height', Descriptor.minHeight);
+        allowDimension('maximal overlay height', Descriptor.maxHeight);
+        allowFunction('"onOpen" callback', Descriptor.onOpen);
+        allowFunction('"onClose" callback', Descriptor.onClose);
+        let { Name, isModal, x, y, Width, Height, minWidth, maxWidth, minHeight, maxHeight, onOpen, onClose } = Descriptor;
+        this._Name = Name;
+        this._normalizedName = Name.toLowerCase();
+        this._isModal = (isModal || false);
+        this._minWidth = Math.max(0, minWidth || 0);
+        this._maxWidth = maxWidth;
+        this._minHeight = Math.max(0, minHeight || 0);
+        this._maxHeight = maxHeight;
+        this._x = (x || 0);
+        this._onOpen = onOpen;
+        this._y = (y || 0);
+        this._onClose = onClose;
+        let SourceWidget, SourceWidgetPath;
+        switch (true) {
+            case Descriptor.SourceWidget == null:
+                throwError('MissingArgument: no source widget path given');
+            case ValueIsPath(Descriptor.SourceWidget):
+                SourceWidgetPath = Descriptor.SourceWidget;
+                SourceWidget = (_a = Widget.Applet) === null || _a === void 0 ? void 0 : _a.WidgetAtPath(SourceWidgetPath);
+                if (SourceWidget == null)
+                    throwError(`NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`);
+                break;
+            case ValueIsWidget(Descriptor.SourceWidget):
+                SourceWidget = Descriptor.SourceWidget;
+                SourceWidgetPath = SourceWidget.Path;
+                break;
+            default:
+                throwError('InvalidArgument: the given source widget is neither a widget ' +
+                    'nor a widget path');
+        }
+        this._SourceWidgetPath = SourceWidgetPath;
+        if ((Width == null) || (Height == null)) {
+            let SourceGeometry = SourceWidget.Geometry;
+            if (Width == null) {
+                Width = SourceGeometry.Width;
+            }
+            if (Height == null) {
+                Height = SourceGeometry.Height;
+            }
+        }
+        this._Width = Math.max(this._minWidth, Math.min(Width, maxWidth || Infinity));
+        this._Height = Math.max(this._minHeight, Math.min(Height, maxHeight || Infinity));
+    }
+    /**** Widget ****/
+    get Widget() { return this._Widget; }
+    set Widget(_) { throwReadOnlyError('Widget'); }
+    /**** Name ****/
+    get Name() { return this._Name; }
+    set Name(_) { throwReadOnlyError('Name'); }
+    /**** normalizedName ****/
+    get normalizedName() { return this._normalizedName; }
+    set normalizedName(_) { throwReadOnlyError('normalizedName'); }
+    /**** isModal ****/
+    get isModal() { return this._isModal; }
+    set isModal(_) { throwReadOnlyError('isModal'); }
+    /**** SourceWidgetPath ****/
+    get SourceWidgetPath() { return this._SourceWidgetPath; }
+    set SourceWidgetPath(_) { throwReadOnlyError('SourceWidgetPath'); }
+    /**** onOpen ****/
+    get onOpen() { return this._onOpen; }
+    set onOpen(_) { throwReadOnlyError('onOpen'); }
+    /**** onClose ****/
+    get onClose() { return this._onClose; }
+    set onClose(_) { throwReadOnlyError('onClose'); }
+    /**** x ****/
+    get x() { return this._x; }
+    set x(newX) {
+        expectLocation('overlay x position', newX);
+        if (this._x !== newX) {
+            this._x = newX;
+            this._Widget.rerender();
+        }
+    }
+    /**** y ****/
+    get y() { return this._y; }
+    set y(newY) {
+        expectLocation('overlay y position', newY);
+        if (this._y !== newY) {
+            this._y = newY;
+            this._Widget.rerender();
+        }
+    }
+    /**** Width ****/
+    get Width() { return this._Width; }
+    set Width(newWidth) {
+        expectDimension('overlay width', newWidth);
+        if (this._Width !== newWidth) {
+            this._Width = newWidth;
+            this._Widget.rerender();
+        }
+    }
+    /**** Height ****/
+    get Height() { return this._Height; }
+    set Height(newHeight) {
+        expectDimension('overlay height', newHeight);
+        if (this._Height !== newHeight) {
+            this._Height = newHeight;
+            this._Widget.rerender();
+        }
+    }
+    /**** minWidth ****/
+    get minWidth() { return this._minWidth; }
+    set minWidth(newValue) {
+        expectDimension('minimal overlay width', newValue);
+        if (this._minWidth !== newValue) {
+            this._minWidth = newValue;
+            this._Widget.rerender();
+        }
+    }
+    /**** maxWidth ****/
+    get maxWidth() { return this._maxWidth; }
+    set maxWidth(newValue) {
+        allowDimension('maximal overlay width', newValue);
+        if (this._maxWidth !== newValue) {
+            this._maxWidth = newValue;
+            this._Widget.rerender();
+        }
+    }
+    /**** minHeight ****/
+    get minHeight() { return this._minHeight; }
+    set minHeight(newValue) {
+        expectDimension('minimal overlay height', newValue);
+        if (this._minHeight !== newValue) {
+            this._minHeight = newValue;
+            this._Widget.rerender();
+        }
+    }
+    /**** maxHeight ****/
+    get maxHeight() { return this._maxHeight; }
+    set maxHeight(newValue) {
+        allowDimension('maximal overlay height', newValue);
+        if (this._maxHeight !== newValue) {
+            this._maxHeight = newValue;
+            this._Widget.rerender();
+        }
+    }
+    /**** close ****/
+    close() {
+        this._Widget.closeOverlay(this._Name);
     }
 }
 //------------------------------------------------------------------------------
@@ -6689,11 +7181,13 @@ function registerIntrinsicBehaviorsIn(Applet) {
                     }
                 }
             };
+            function _onClick(Event) { my.on('click')(Event); }
             /**** actual rendering ****/
             return html `<img class="WAC Content ImageView"
         src=${ImageURL || ''}
         style="object-fit:${ImageScaling}; object-position:${ImageAlignment}"
         onDragOver=${allowsDropping && _onDragOver} onDrop=${allowsDropping && _onDrop}
+        onClick=${_onClick}
       />`;
         });
     };
@@ -9303,9 +9797,10 @@ class WAC_WidgetView extends Component {
       >
         ${openOverlays.map((Overlay, Index) => html `
           ${(Index === lastOverlayIndex)
-            ? html `<${WAC_WidgetUnderlay} Widget=${Widget} Overlay=${Overlay}/>`
-            : ''}
-          <${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>
+            ? html `<${WAC_WidgetUnderlay} Widget=${Widget} Overlay=${Overlay}>
+              <${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>
+            </>`
+            : html `<${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>`}
         `)}
       </div>` : ''}`;
     }
@@ -9392,12 +9887,15 @@ class WAC_AppletOverlayView extends Component {
     }
     /**** componentDidMount ****/
     componentDidMount() {
+        // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
         this._Overlay._View = this;
         this.base['Applet'] = this._Applet;
+        this.base['Overlay'] = this._Overlay;
     }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
         //    this._releaseWidgets()  // may be too late, is therefore done when closing
+        // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
         delete this._Overlay._View;
     }
     /**** _GeometryRelativeTo  ****/
@@ -9505,7 +10003,10 @@ class WAC_AppletOverlayView extends Component {
         const { Applet, Overlay } = PropSet;
         this._Applet = Applet;
         this._Overlay = Overlay;
-        const { SourceWidgetPath, asDialog, fromRight, fromBottom, Title, isClosable, isDraggable, isResizable, x, y, Width, Height, } = Overlay;
+        let { SourceWidgetPath, Title, isClosable, isDraggable, isResizable, x, y, Width, Height, Anchoring } = Overlay;
+        const asDialog = (Overlay instanceof WAC_Dialog);
+        const fromRight = (Anchoring[0] === 'right');
+        const fromBottom = (Anchoring[1] === 'bottom');
         /**** leave here if overlay should not be shown... ****/
         const SourceWidget = Applet.WidgetAtPath(SourceWidgetPath);
         const Visibility = (SourceWidget == null
@@ -9515,6 +10016,12 @@ class WAC_AppletOverlayView extends Component {
             return '';
         }
         /**** ...otherwise continue as usual ****/
+        if (x == null) {
+            x = Overlay.x = (Applet.Width - Width) / 2;
+        }
+        if (y == null) {
+            y = Overlay.y = (Applet.Height - Height) / 2;
+        }
         const hasTitlebar = asDialog && ((Title != null) || isDraggable || isClosable);
         const resizable = (asDialog && isResizable ? 'resizable' : '');
         const withTitlebar = (asDialog && hasTitlebar ? 'withTitlebar' : '');
@@ -9667,7 +10174,7 @@ class WAC_WidgetUnderlay extends Component {
         return html `<div class="WAC ${modal} WidgetUnderlay"
         onMouseDown=${handleEvent} onPointerDown=${handleEvent}
         onTouchStart=${handleEvent}
-      />`;
+      >${PropSet.children}</>`;
     }
 }
 //------------------------------------------------------------------------------
@@ -9677,6 +10184,13 @@ class WAC_WidgetOverlayView extends Component {
     constructor() {
         super(...arguments);
         Object.defineProperty(this, "_Widget", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        // @ts-ignore TS2564 will be initialized in renderer
+        Object.defineProperty(this, "_Overlay", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -9695,11 +10209,16 @@ class WAC_WidgetOverlayView extends Component {
     }
     /**** componentDidMount ****/
     componentDidMount() {
+        // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
+        this._Overlay._View = this;
         this.base['Widget'] = this._Widget;
+        this.base['Overlay'] = this._Overlay;
     }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
-        this._releaseWidgets();
+        //    this._releaseWidgets()  // may be too late, is therefore done when closing
+        // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
+        delete this._Overlay._View;
     }
     /**** _GeometryRelativeTo  ****/
     _GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry) {
@@ -9743,6 +10262,7 @@ class WAC_WidgetOverlayView extends Component {
         this._releaseWidgets();
         const { Widget, Overlay } = PropSet;
         this._Widget = Widget;
+        this._Overlay = Overlay;
         const { SourceWidgetPath, x, y, Width, Height } = Overlay;
         /**** repositioning on viewport ****/
         const { x: AppletX, y: AppletY } = Widget.Applet.Geometry;
