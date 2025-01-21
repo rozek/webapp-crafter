@@ -505,8 +505,8 @@ export function ActivationStack() {
 }
 /**** DesignerAssetsBase ****/
 let DesignerAssetsBase = 'https://rozek.github.io/webapp-crafter/';
-/**** ValueIsAbsoluteURL ****/
-export function ValueIsAbsoluteURL(Value) {
+/**** URLhasSchema ****/
+export function URLhasSchema(Value) {
     return ValueIsURL(Value) && ValueIsStringMatching(Value, /^[a-z][a-z0-9+.-]*:\/\//i);
 }
 //------------------------------------------------------------------------------
@@ -3266,6 +3266,17 @@ export class WAC_Applet extends WAC_Visual {
         if (this._AssetsBase !== newURL) {
             this._AssetsBase = newURL;
             this.rerender();
+        }
+    }
+    /**** AssetURL ****/
+    AssetURL(relativeURL) {
+        expectURL('asset URL', relativeURL);
+        switch (true) {
+            case URLhasSchema(relativeURL):
+                return relativeURL;
+            case relativeURL.startsWith('/'):
+                return this._AssetsBase + relativeURL.replace(/^\/+/, '');
+            default: return this._AssetsBase + relativeURL;
         }
     }
     get BehaviorSet() {
@@ -6620,10 +6631,7 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            let ImageURL = this.Value;
-            if (!ValueIsAbsoluteURL(ImageURL)) {
-                ImageURL = this.Applet.AssetsBase + ImageURL;
-            }
+            const ImageURL = this.Applet.AssetURL(this.Value);
             const { ImageScaling, ImageAlignment, Enabling, readonly } = this;
             let acceptableFileTypes = this.acceptableFileTypes;
             if (acceptableFileTypes.length === 0) {
@@ -6749,10 +6757,7 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            let WebURL = this.Value;
-            if (!ValueIsAbsoluteURL(WebURL)) {
-                WebURL = this.Applet.AssetsBase + WebURL;
-            }
+            const WebURL = this.Applet.AssetURL(this.Value);
             const { PermissionsPolicy, allowsFullscreen, SandboxPermissions, ReferrerPolicy } = this.memoized;
             return html `<iframe class="WAC Content WebView"
         src=${WebURL || ''}
@@ -6868,11 +6873,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            let IconURL = this.Icon;
-            if (!ValueIsAbsoluteURL(IconURL)) {
-                IconURL = this.Applet.AssetsBase + IconURL;
-            }
             const { Enabling, /*Icon,*/ Color } = this;
+            const IconURL = this.Applet.AssetURL(this.Icon);
             const disabled = (Enabling == false);
             const _onClick = (Event) => {
                 if (Enabling === false) {
@@ -8029,10 +8031,7 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            let IconURL = this.Icon;
-            if (!ValueIsAbsoluteURL(IconURL)) {
-                IconURL = this.Applet.AssetsBase + IconURL;
-            }
+            const IconURL = this.Applet.AssetURL(this.Icon);
             const { Enabling, /*Icon,*/ Color, allowMultiple, acceptableFileTypes } = this;
             const _onInput = async (Event) => {
                 if (this.Enabling == false) {
@@ -8369,10 +8368,7 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            let IconURL = this.Icon;
-            if (!ValueIsAbsoluteURL(IconURL)) {
-                IconURL = this.Applet.AssetsBase + IconURL;
-            }
+            const IconURL = this.Applet.AssetURL(this.Icon);
             const { Value, Enabling, /*Icon,*/ Color, Options } = this;
             const _onInput = (Event) => {
                 if (Enabling === false) {
@@ -8789,11 +8785,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            let IconURL = this.Icon;
-            if (!ValueIsAbsoluteURL(IconURL)) {
-                IconURL = this.Applet.AssetsBase + IconURL;
-            }
             const { Enabling, isActive, /*Icon,*/ Color } = this;
+            const IconURL = this.Applet.AssetURL(this.Icon);
             const disabled = (Enabling == false);
             const onClick = (Event) => {
                 if (disabled) {
@@ -9523,10 +9516,12 @@ class WAC_AppletOverlayView extends Component {
             top: y + (fromBottom ? AppletHeight : 0)
         };
         if (asDialog) {
-            let minX = -AppletX, maxX = document.documentElement.clientWidth - 30 - AppletX;
-            let minY = -AppletY, maxY = document.documentElement.clientHeight - 30 - AppletY;
-            left = Math.max(minX, Math.min(left, maxX));
-            top = Math.max(minY, Math.min(top, maxY));
+            ;
+            ({ left, top } = fromDocumentTo('viewport', {
+                left: left + AppletX, top: top + AppletY
+            }));
+            left = Math.max(0, Math.min(left, document.documentElement.clientWidth - 30));
+            top = Math.max(0, Math.min(top, document.documentElement.clientHeight - 30));
         }
         else {
             left = Math.max(0, Math.min(left, AppletWidth));
@@ -9550,7 +9545,7 @@ class WAC_AppletOverlayView extends Component {
             WidgetsToShow.forEach((Widget) => Widget._Pane = Overlay);
             this._shownWidgets = WidgetsToShow;
         }
-        const PaneGeometry = { x, y, Width, Height };
+        const PaneGeometry = { x, y, Width: Width - 2, Height: Height - 2 };
         if (hasTitlebar) {
             PaneGeometry.Height -= 30;
         }
@@ -9561,8 +9556,14 @@ class WAC_AppletOverlayView extends Component {
         const BaseGeometry = (SourceWidget == null
             ? { x: 0, y: 0, Width: 0, Height: 0 } // just a dummy
             : SourceWidget.Geometry);
+        let ContentPaneIsTooSmall = false; // browsers are not precise enough
         let ContentPane = this._shownWidgets.toReversed().map((Widget) => {
             let Geometry = this._GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry);
+            const { x, y, Width, Height } = Geometry;
+            if ((x < 0) || (x + Width > PaneGeometry.Width) ||
+                (y < 0) || (y + Height > PaneGeometry.Height)) {
+                ContentPaneIsTooSmall = true;
+            }
             return html `<${WAC_WidgetView} Widget=${Widget} Geometry=${Geometry}/>`;
         });
         /**** actual overlay rendering ****/
@@ -9577,11 +9578,13 @@ class WAC_AppletOverlayView extends Component {
             <div class="Title">${Title}</div>
 
             ${(isClosable) && html `
-              <img class="CloseButton" src="${Applet.AssetsBase}/icons/xmark.png" onClick=${onClose}/>
+              <img class="CloseButton" src="${Applet.AssetURL('/icons/xmark.png')}" onClick=${onClose}/>
             `}
           </div>`}
 
-          <div class="ContentPane">${ContentPane}</div>
+          <div class="ContentPane" style="
+            overflow:${ContentPaneIsTooSmall ? 'auto' : 'hidden'}"
+          >${ContentPane}</div>
 
           ${isResizable && html `
             <div class="leftResizer"
