@@ -5304,6 +5304,12 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
         Applet._deserializeConfigurationFrom(Serialization)
         Applet._deserializePagesFrom(Serialization)
 
+        if (Applet._PageList.length === 0) {
+          Applet._deserializePagesFrom({ PageList:[
+            { WidgetList:[] }
+          ] })
+        }
+
         makeVisualReady(Applet)
       return Applet
     }
@@ -5690,6 +5696,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
         newWidget._deserializeConfigurationFrom(Serialization)
 
         makeVisualReady(newWidget)
+        this.rerender()
       return newWidget
     }
 
@@ -11433,7 +11440,11 @@ console.log('rendering...')
 
       let AppletRendering:any
         try {
-          AppletRendering = html`<${WAC_AppletView} Applet=${Applet}/>`
+          AppletRendering = (
+            Applet.isReady
+            ? html`<${WAC_AppletView} Applet=${Applet}/>`
+            : html`<div class="WAC centered" style="width:100%; height:100%"><div>(loading)</div></div>`
+          )
         } catch (Signal:any) {
           console.warn('uncaught Error in Applet Rendering',Signal)
         }
@@ -11468,7 +11479,7 @@ console.log('rendering...')
     public componentDidMount ():void {
       const Applet = this._Applet as WAC_Applet
 
-      (this as Component).base['Applet'] = Applet
+      (this as Component).base['_Applet'] = Applet
 
       Applet['_View'] = (this as Component).base
       Applet.on('mount')()
@@ -11558,7 +11569,7 @@ console.log('rendering...')
     public componentDidMount ():void {
       const Page = this._Page as WAC_Page
 
-      (this as Component).base['Page'] = Page
+      (this as Component).base['_Page'] = Page
 
       Page['_View'] = (this as Component).base
       Page.on('mount')()
@@ -11641,7 +11652,7 @@ console.log('rendering...')
     public componentDidMount ():void {
       const Widget = this._Widget as WAC_Widget
 
-      (this as Component).base['Widget'] = Widget
+      (this as Component).base['_Widget'] = Widget
 
       Widget['_View'] = (this as Component).base
       Widget.on('mount')()
@@ -11770,8 +11781,8 @@ console.log('rendering...')
     public componentDidMount ():void {
 // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
       this._Overlay._View = this
-      ;(this as Component).base['Applet']  = this._Applet
-      ;(this as Component).base['Overlay'] = this._Overlay
+      ;(this as Component).base['_Applet']  = this._Applet
+      ;(this as Component).base['_Overlay'] = this._Overlay
     }
 
   /**** componentWillUnmount ****/
@@ -12079,7 +12090,7 @@ console.log('rendering...')
     protected _Widget:WAC_Widget|undefined
 
     public componentDidMount () {
-      (this as Component).base['Widget'] = this._Widget
+      (this as Component).base['_Widget'] = this._Widget
 
       WAC_WidgetUnderlay_EventTypes.forEach((EventType:string) => {
         (this as Component).base.addEventListener(EventType,consumeEvent)
@@ -12132,8 +12143,8 @@ console.log('rendering...')
     public componentDidMount ():void {
 // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
       this._Overlay._View = this
-      ;(this as Component).base['Widget']  = this._Widget
-      ;(this as Component).base['Overlay'] = this._Overlay
+      ;(this as Component).base['_Widget']  = this._Widget
+      ;(this as Component).base['_Overlay'] = this._Overlay
     }
 
   /**** componentWillUnmount ****/
@@ -12322,9 +12333,9 @@ console.log('rendering...')
         } else { break }
       case (Value instanceof Element):
         switch (true) {
-          case Value.Applet != null: return (Value.Applet as WAC_Applet)
-          case Value.Page   != null: return (Value.Page   as WAC_Page).Applet
-          case Value.Widget != null: return (Value.Widget as WAC_Widget).Applet
+          case Value.Applet != null: return (Value._Applet as WAC_Applet)
+          case Value.Page   != null: return (Value._Page   as WAC_Page).Applet
+          case Value.Widget != null: return (Value._Widget as WAC_Widget).Applet
         }
     }
 
@@ -12349,9 +12360,9 @@ console.log('rendering...')
         } else { break }
       case (Value instanceof Element):
         switch (true) {
-          case Value.Applet != null: return (Value.Applet as WAC_Applet).visitedPage
-          case Value.Page   != null: return (Value.Page   as WAC_Page)
-          case Value.Widget != null: return (Value.Widget as WAC_Widget).Page
+          case Value.Applet != null: return (Value._Applet as WAC_Applet).visitedPage
+          case Value.Page   != null: return (Value._Page   as WAC_Page)
+          case Value.Widget != null: return (Value._Widget as WAC_Widget).Page
         }
     }
 
@@ -12372,7 +12383,7 @@ console.log('rendering...')
           )
         } else { break }
       case (Value instanceof Element):
-        if (Value.Widget != null) { return (Value.Widget as WAC_Widget) }
+        if (Value.Widget != null) { return (Value._Widget as WAC_Widget) }
     }
 
     window.alert('could not find any widget for this DOM element')
@@ -12468,7 +12479,7 @@ console.log('rendering...')
           console.error(`could not deserialize applet ${quoted(AppletName)}`, Signal)
         }
       }
-    if (Applet == null) {
+    if (Applet == null) {         // in case of an error, create an empty applet
       Applet = WAC_Applet.deserializedFrom('{"PageList":[{ "WidgetList":[] }]}')
     }
 
