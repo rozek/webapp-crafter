@@ -4263,6 +4263,7 @@ export class WAC_Applet extends WAC_Visual {
             case ValueIsWidget(Descriptor.SourceWidget):
                 SourceWidget = Descriptor.SourceWidget;
                 SourceWidgetPath = SourceWidget.Path;
+                break;
             default:
                 throwError('InvalidArgument: the given source widget is neither a widget ' +
                     'nor a widget path');
@@ -5958,6 +5959,7 @@ export class WAC_Widget extends WAC_Visual {
             case ValueIsWidget(Descriptor.SourceWidget):
                 SourceWidget = Descriptor.SourceWidget;
                 SourceWidgetPath = SourceWidget.Path;
+                break;
             default:
                 throwError('InvalidArgument: the given source widget is neither a widget ' +
                     'nor a widget path');
@@ -6815,8 +6817,11 @@ function registerIntrinsicBehaviorsIn(Applet) {
             { Name: 'Value', Placeholder: '(enter label)',
                 EditorType: 'textline-input', AccessorsFor: 'memoized', withCallback: true, },
         ];
+        function _onClick(Event) { my.on('click')(Event); }
         onRender(function () {
-            return html `<div class="WAC Content LabelView">${my.Value}</>`;
+            return html `<div class="WAC Content LabelView"
+        onClick=${_onClick}
+      >${my.Value}</>`;
         });
     };
     registerIntrinsicBehavior(Applet, 'widget', 'basic_controls.LabelView', WAC_LabelView);
@@ -9545,7 +9550,7 @@ class WAC_AppletOverlayView extends Component {
             WidgetsToShow.forEach((Widget) => Widget._Pane = Overlay);
             this._shownWidgets = WidgetsToShow;
         }
-        const PaneGeometry = { x, y, Width: Width - 2, Height: Height - 2 };
+        const PaneGeometry = { x, y, Width, Height }; // some browsers need Width+2,Height+2
         if (hasTitlebar) {
             PaneGeometry.Height -= 30;
         }
@@ -9738,7 +9743,9 @@ class WAC_WidgetOverlayView extends Component {
             this._shownWidgets = WidgetsToShow;
         }
         const PaneGeometry = { x, y, Width, Height };
-        const BaseGeometry = SourceWidget.Geometry;
+        const BaseGeometry = (SourceWidget == null
+            ? { x: 0, y: 0, Width: 0, Height: 0 } // just a dummy
+            : SourceWidget.Geometry);
         let ContentPane = this._shownWidgets.toReversed().map((Widget) => {
             let Geometry = this._GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry);
             return html `<${WAC_WidgetView} Widget=${Widget} Geometry=${Geometry}/>`;
