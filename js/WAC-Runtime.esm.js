@@ -9096,6 +9096,7 @@ class WAC_AppletView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         const Applet = this._Applet;
+        this.base['Applet'] = Applet;
         Applet['_View'] = this.base;
         Applet.on('mount')();
     }
@@ -9188,6 +9189,7 @@ class WAC_PageView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         const Page = this._Page;
+        this.base['Page'] = Page;
         Page['_View'] = this.base;
         Page.on('mount')();
     }
@@ -9258,6 +9260,7 @@ class WAC_WidgetView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         const Widget = this._Widget;
+        this.base['Widget'] = Widget;
         Widget['_View'] = this.base;
         Widget.on('mount')();
     }
@@ -9390,6 +9393,7 @@ class WAC_AppletOverlayView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         this._Overlay._View = this;
+        this.base['Applet'] = this._Applet;
     }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
@@ -9630,7 +9634,17 @@ const WAC_WidgetUnderlay_EventTypes = [
     'wheel', 'contextmenu', 'focus', 'blur'
 ];
 class WAC_WidgetUnderlay extends Component {
+    constructor() {
+        super(...arguments);
+        Object.defineProperty(this, "_Widget", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+    }
     componentDidMount() {
+        this.base['Widget'] = this._Widget;
         WAC_WidgetUnderlay_EventTypes.forEach((EventType) => {
             this.base.addEventListener(EventType, consumeEvent);
         });
@@ -9642,6 +9656,7 @@ class WAC_WidgetUnderlay extends Component {
     }
     render(PropSet) {
         const { Widget, Overlay } = PropSet;
+        this._Widget = Widget;
         const handleEvent = (Event) => {
             consumeEvent(Event);
             if (!Overlay.isModal) {
@@ -9661,6 +9676,12 @@ class WAC_WidgetUnderlay extends Component {
 class WAC_WidgetOverlayView extends Component {
     constructor() {
         super(...arguments);
+        Object.defineProperty(this, "_Widget", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "_shownWidgets", {
             enumerable: true,
             configurable: true,
@@ -9671,6 +9692,10 @@ class WAC_WidgetOverlayView extends Component {
     /**** _releaseWidgets ****/
     _releaseWidgets() {
         this._shownWidgets.forEach((Widget) => Widget._Pane = undefined);
+    }
+    /**** componentDidMount ****/
+    componentDidMount() {
+        this.base['Widget'] = this._Widget;
     }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
@@ -9717,6 +9742,7 @@ class WAC_WidgetOverlayView extends Component {
     render(PropSet) {
         this._releaseWidgets();
         const { Widget, Overlay } = PropSet;
+        this._Widget = Widget;
         const { SourceWidgetPath, x, y, Width, Height } = Overlay;
         /**** repositioning on viewport ****/
         const { x: AppletX, y: AppletY } = Widget.Applet.Geometry;
@@ -9793,7 +9819,76 @@ export function useDesigner(newDesigner) {
     DesignerLayer = newDesigner;
     rerender();
 }
-//------------------------------------------------------------------------------
+/**** AppletFor ****/
+export function AppletFor(Value) {
+    switch (true) {
+        case ValueIsApplet(Value): return Value;
+        case ValueIsPage(Value): return Value.Applet;
+        case ValueIsWidget(Value): return Value.Applet;
+        case (Value instanceof Event):
+            if (Value.target != null) {
+                Value = Value.target.closest('.WAC.Applet,.WAC.Page,.WAC.Widget,' +
+                    '.WAC.AppletOverlay,.WAC.Dialog,' +
+                    '.WAC.WidgetOverlay,.WAC.WidgetUnderlay');
+            }
+            else {
+                break;
+            }
+        case (Value instanceof Element):
+            switch (true) {
+                case Value.Applet != null: return Value.Applet;
+                case Value.Page != null: return Value.Page.Applet;
+                case Value.Widget != null: return Value.Widget.Applet;
+            }
+    }
+    window.alert('could not find any visual for this DOM element');
+    return undefined;
+}
+/**** PageFor ****/
+export function PageFor(Value) {
+    switch (true) {
+        case ValueIsApplet(Value): return Value.visitedPage;
+        case ValueIsPage(Value): return Value;
+        case ValueIsWidget(Value): return Value.Page;
+        case (Value instanceof Event):
+            if (Value.target != null) {
+                Value = Value.target.closest('.WAC.Applet,.WAC.Page,.WAC.Widget,' +
+                    '.WAC.AppletOverlay,.WAC.Dialog,' +
+                    '.WAC.WidgetOverlay,.WAC.WidgetUnderlay');
+            }
+            else {
+                break;
+            }
+        case (Value instanceof Element):
+            switch (true) {
+                case Value.Applet != null: return Value.Applet.visitedPage;
+                case Value.Page != null: return Value.Page;
+                case Value.Widget != null: return Value.Widget.Page;
+            }
+    }
+    window.alert('could not find any visual for this DOM element');
+    return undefined;
+}
+/**** WidgetFor ****/
+export function WidgetFor(Value) {
+    switch (true) {
+        case ValueIsWidget(Value): return Value;
+        case (Value instanceof Event):
+            if (Value.target != null) {
+                Value = Value.target.closest('.WAC.Widget,' +
+                    '.WAC.WidgetOverlay,.WAC.WidgetUnderlay');
+            }
+            else {
+                break;
+            }
+        case (Value instanceof Element):
+            if (Value.Widget != null) {
+                return Value.Widget;
+            }
+    }
+    window.alert('could not find any widget for this DOM element');
+    return undefined;
+} //------------------------------------------------------------------------------
 //--                               WAC Startup                                --
 //------------------------------------------------------------------------------
 let AppletStore;
@@ -9929,6 +10024,9 @@ Object.assign(WAC, {
     Component, createRef, useRef, useEffect, useCallback,
     fromLocalTo, fromViewportTo, fromDocumentTo,
 });
+global.AppletFor = AppletFor;
+global.PageFor = PageFor;
+global.WidgetFor = WidgetFor;
 /**** start WAC up ****/
 localforage.config({
     driver: [localforage.INDEXEDDB, localforage.WEBSQL]
