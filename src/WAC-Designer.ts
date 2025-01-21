@@ -122,10 +122,13 @@
     display:block; position:absolute; overflow:visible;
     left:0px; top:0px; right:0px; bottom:0px;
     padding:0px;
-    background:none; color:black;
+    background:none;
+
+    color:black;
     font-family:'Source Sans Pro','Helvetica Neue',Helvetica,Arial,sans-serif;
     font-size:14px; font-weight:400; line-height:1.4; color:black;
     text-align:left; text-shadow:none;
+
     z-index:2000000;
     pointer-events:none;
   }
@@ -4984,19 +4987,19 @@ console.log('DesignerState',DesignerState)
     let {
       Width,Height, minWidth,minHeight, maxWidth,maxHeight,
       keepGeometries
-    } = DesignerState.AppletResizer
+    } = DesignerState.AppletResizer // null = "use current setting", 0 = default
 
-    if ((Width  || 0) === 0) { Width  = Applet.Width }
-    if ((Height || 0) === 0) { Height = Applet.Height }
+    if (Width  === 0) { Width  = Applet.Width }
+    if (Height === 0) { Height = Applet.Height }
 
-    if ((minWidth  || 0) === 0) { minWidth  = Applet.minWidth }
-    if ((minHeight || 0) === 0) { minHeight = Applet.minHeight }
+    if (minWidth  === 0) { minWidth  = 0 }
+    if (minHeight === 0) { minHeight = 0 }
 
-    if ((maxWidth  || 0) === 0) { maxWidth  = Applet.maxWidth }
-    if ((maxHeight || 0) === 0) { maxHeight = Applet.maxHeight }
+    if (maxWidth  === 0) { maxWidth  = undefined }
+    if (maxHeight === 0) { maxHeight = undefined }
 
-    Width  = Math.max(minWidth,  Math.min(Width,  maxWidth  == null ? Infinity : maxWidth))
-    Height = Math.max(minHeight, Math.min(Height, maxHeight == null ? Infinity : maxHeight))
+    Width  = Math.max(minWidth  || Applet.minWidth,  Math.min(Width  || Applet.Width,  maxWidth  == null ? Infinity : maxWidth))
+    Height = Math.max(minHeight || Applet.minHeight, Math.min(Height || Applet.Height, maxHeight == null ? Infinity : maxHeight))
 
     resizeAppletTo (
       Applet,
@@ -5704,7 +5707,7 @@ console.log('DesignerState',DesignerState)
           </>
         </>
 
-        <${WAD_Fold} Label="Geometry"
+        <${WAD_Fold} Label="Geometry (static)"
           Expansion=${Expansions.Geometry}
           toggleExpansion=${() => toggleExpansion('Geometry')}
         >
@@ -5786,7 +5789,7 @@ console.log('DesignerState',DesignerState)
           </>
         </>
 
-        <${WAD_Fold} Label="Applet Resizing"
+        <${WAD_Fold} Label="Applet Resizing (changes Geometry)"
           Expansion=${Expansions.AppletResizing}
           toggleExpansion=${() => toggleExpansion('AppletResizing')}
         >
