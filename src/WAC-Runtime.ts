@@ -11889,14 +11889,20 @@ console.log('rendering...')
     let AppletName = acceptableValue(
       AppletElement.getAttribute('name'),ValueIsName,'WAC-Applet'
     )
+
     let AssetsBase = acceptableValue(
-      AppletElement.getAttribute('assets-base'),ValueIsURL
+      AppletElement.getAttribute('assets-base'),ValueIsURL,''
     )
+    if (AssetsBase.trim() === '') {
+      AssetsBase = 'https://rozek.github.io/webapp-crafter/'
+    }
 
     DesignerAssetsBase = acceptableValue(
-      AppletElement.getAttribute('designer-assets-base'),ValueIsURL,
-      'https://rozek.github.io/webapp-crafter/'
+      AppletElement.getAttribute('designer-assets-base'),ValueIsURL,''
     )
+    if (DesignerAssetsBase.trim() === '') {
+      DesignerAssetsBase = 'https://rozek.github.io/webapp-crafter/'
+    }
 
   /**** read applet script - if stored separately ****/
 
