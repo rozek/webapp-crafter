@@ -5128,7 +5128,7 @@ export class WAC_Widget extends WAC_Visual {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: [0, 20, 0, 20]
+            value: [10, 30, 10, 30]
         });
         /**** Overflows ****/
         Object.defineProperty(this, "_Overflows", {
@@ -6878,8 +6878,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            const { Enabling, /*Icon,*/ Color } = this;
-            const IconURL = this.Applet.AssetURL(this.Icon);
+            const { Enabling, Icon, Color } = this;
+            const IconURL = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/circle-information.png' : this.Icon);
             const disabled = (Enabling == false);
             const _onClick = (Event) => {
                 if (Enabling === false) {
@@ -8036,8 +8036,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            const IconURL = this.Applet.AssetURL(this.Icon);
-            const { Enabling, /*Icon,*/ Color, allowMultiple, acceptableFileTypes } = this;
+            const { Enabling, Icon, Color, allowMultiple, acceptableFileTypes } = this;
+            const IconURL = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/arrow-up-from-bracket.png' : this.Icon);
             const _onInput = async (Event) => {
                 if (this.Enabling == false) {
                     return consumingEvent(Event);
@@ -8373,8 +8373,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            const IconURL = this.Applet.AssetURL(this.Icon);
-            const { Value, Enabling, /*Icon,*/ Color, Options } = this;
+            const { Value, Enabling, Icon, Color, Options } = this;
+            const IconURL = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/drop-down.png' : this.Icon);
             const _onInput = (Event) => {
                 if (Enabling === false) {
                     return consumingEvent(Event);
@@ -8790,8 +8790,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
         });
         /**** Renderer ****/
         onRender(function () {
-            const { Enabling, isActive, /*Icon,*/ Color } = this;
-            const IconURL = this.Applet.AssetURL(this.Icon);
+            const { Enabling, isActive, Icon, Color } = this;
+            const IconURL = this.Applet.AssetURL(this.Icon.trim() === '' ? '/icons/circle-information.png' : this.Icon);
             const disabled = (Enabling == false);
             const onClick = (Event) => {
                 if (disabled) {
