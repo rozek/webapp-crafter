@@ -30,7 +30,7 @@
       allowOrdinal, expectCardinal,
     expectString, allowText, expectText, allowTextline, expectTextline,
     expectPlainObject,
-    expectList, allowListSatisfying, expectListSatisfying,
+    allowList, expectList, allowListSatisfying, expectListSatisfying,
     allowFunction, expectFunction,
     allowOneOf, expectOneOf,
     allowColor, allowURL, expectURL,
@@ -272,28 +272,7 @@
     Cause:any
   }
 
-/**** Applet and Widget Overlays ****/
-
-  type WAC_AppletOverlay = {
-    Name:WAC_Name, normalizedName:WAC_Name, SourceWidgetPath:WAC_Path,
-    asDialog?:boolean, fromRight?:boolean, fromBottom?:boolean,
-    Title?:WAC_Textline,
-    isModal:boolean, isClosable:boolean, isDraggable:boolean, isResizable:boolean,
-    x:WAC_Location, y:WAC_Location, Width:WAC_Dimension, Height:WAC_Dimension,
-    minWidth?:WAC_Dimension, minHeight?:WAC_Dimension,
-    maxWidth?:WAC_Dimension, maxHeight?:WAC_Dimension,
-    onOpen?:Function, onClose?:Function,
-    _View?:Component                                     // used internally only
-  }
-
-  type WAC_WidgetOverlay = {
-    Name:WAC_Name, normalizedName:WAC_Name, SourceWidgetPath:WAC_Path,
-    isModal:boolean,
-    x:WAC_Location, y:WAC_Location, Width:WAC_Dimension, Height:WAC_Dimension,
-    minWidth?:WAC_Dimension, minHeight?:WAC_Dimension,
-    maxWidth?:WAC_Dimension, maxHeight?:WAC_Dimension,
-    onOpen?:Function, onClose?:Function
-  }/**** throwError - simplifies construction of named errors ****/
+/**** throwError - simplifies construction of named errors ****/
 
   export function throwError (Message:string):never {
     let Match = /^([$a-zA-Z][$a-zA-Z0-9]*):\s*(\S.+)\s*$/.exec(Message)
@@ -4958,102 +4937,11 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
   /**** openOverlay ****/
 
     public openOverlay (Descriptor:Indexable):void {
-      expectPlainObject('overlay descriptor',Descriptor)
-        expectName              ('overlay name',Descriptor.Name)
-        allowBoolean            ('overlay mode',Descriptor.asDialog)
-        allowBoolean    ('right anchor setting',Descriptor.fromRight)
-        allowBoolean   ('bottom anchor setting',Descriptor.fromBottom)
-        allowTextline           ('dialog title',Descriptor.Title)
-        allowBoolean         ('dialog modality',Descriptor.isModal)
-        allowBoolean      ('dialog closability',Descriptor.isClosable)
-        allowBoolean     ('dialog draggability',Descriptor.isDraggable)
-        allowBoolean     ('dialog resizability',Descriptor.isResizable)
-        allowLocation   ('overlay x coordinate',Descriptor.x)
-        allowLocation   ('overlay y coordinate',Descriptor.y)
-        allowDimension         ('overlay width',Descriptor.Width)
-        allowDimension        ('overlay height',Descriptor.Height)
-        allowDimension ('minimal overlay width',Descriptor.minWidth)
-        allowDimension ('maximal overlay width',Descriptor.maxWidth)
-        allowDimension('minimal overlay height',Descriptor.minHeight)
-        allowDimension('maximal overlay height',Descriptor.maxHeight)
-        allowFunction      ('"onOpen" callback',Descriptor.onOpen)
-        allowFunction     ('"onClose" callback',Descriptor.onClose)
-      let {
-        Name, asDialog, fromRight, fromBottom,
-        Title, isModal, isClosable, isDraggable, isResizable,
-        x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
-        onOpen,onClose
-      } = Descriptor
-
       if (this.OverlayIsOpen(Descriptor.Name)) throwError(
         `AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`
       )
 
-      if (asDialog == null) { asDialog = false }
-      if (isModal  == null) { isModal  = false }
-
-      if (asDialog) {
-        if (isClosable  == null) { isClosable  = true }
-        if (isDraggable == null) { isDraggable = true }
-        if (isResizable == null) { isResizable = false }
-        if (Title == null) {
-          if (isClosable || isDraggable) { Title = Name }
-        }
-      } else {
-        Title = undefined
-        isClosable = isDraggable = isResizable = false
-      }
-
-      if (minWidth  == null) { minWidth  = 0 }
-      if (minHeight == null) { minHeight = 0 }
-
-      let SourceWidget:WAC_Widget, SourceWidgetPath:WAC_Path
-        switch (true) {
-          case null:
-          case undefined:
-            throwError('MissingArgument: no source widget path given')
-          case ValueIsPath(Descriptor.SourceWidget):
-            SourceWidgetPath = Descriptor.SourceWidget as WAC_Path
-
-            SourceWidget = this.WidgetAtPath(SourceWidgetPath) as WAC_Widget
-            if (SourceWidget == null) throwError(
-              `NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`
-            )
-            break
-          case ValueIsWidget(Descriptor.SourceWidget):
-            SourceWidget     = Descriptor.SourceWidget as WAC_Widget
-            SourceWidgetPath = SourceWidget.Path
-            break
-          default:
-            throwError(
-              'InvalidArgument: the given source widget is neither a widget ' +
-              'nor a widget path'
-            )
-        }
-      if ((Width == null) || (Height == null)) {
-        let SourceGeometry = SourceWidget.Geometry
-
-        if (Width  == null) { Width  = SourceGeometry.Width }
-        if (Height == null) { Height = SourceGeometry.Height }
-      }
-        if (isClosable) { minWidth = Math.max(30+10,minWidth) }
-
-        if ((Title != null) || isClosable || isDraggable) { Height += 30; minHeight += 30 }
-        if (isResizable)                                  { Height += 10; minHeight += 10 }
-      Width  = Math.max(minWidth  || 0, Math.min(Width, maxWidth  || Infinity))
-      Height = Math.max(minHeight || 0, Math.min(Height,maxHeight || Infinity))
-        if (x == null) { x =  (this.Width-Width) /2 }
-        if (y == null) { y = (this.Height-Height)/2 }
-//    x = Math.max(0, Math.min(x, this.Width-Width))
-//    y = Math.max(0, Math.min(y,this.Height-Height))
-
-      const Overlay:WAC_AppletOverlay = {
-        Name, normalizedName:Name.toLowerCase(), SourceWidgetPath,
-        asDialog, fromRight, fromBottom,
-        Title, isModal, isClosable, isDraggable, isResizable,
-        x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
-        onOpen,onClose
-      }
+      const Overlay = new WAC_AppletOverlay(this,Descriptor)
 
       this._OverlayList.push(Overlay)
       this.rerender()
@@ -5068,6 +4956,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       if (OverlayIndex < 0) { return }
 
       const [ Overlay ] = this._OverlayList.splice(OverlayIndex,1)
+// @ts-ignore TS2445 I know, it's a hack, but allow access to protected members here
       if (Overlay._View != null) { Overlay._View._releaseWidgets() }
 
       this.rerender()
@@ -5102,6 +4991,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     public GeometryOfOverlay (OverlayName:WAC_Name):WAC_Geometry {
       const Overlay = this.existingOverlayNamed(OverlayName)
       const { x,y, Width,Height } = Overlay
+// @ts-ignore TS2322 "x" and "y2 are no longer undefined here
       return { x,y, Width,Height }
     }
 
@@ -5113,6 +5003,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       expectNumber('dx',dx)
       expectNumber('dy',dy)
 
+// @ts-ignore TS2322 "x" and "y2 are no longer undefined here
       this.moveOverlayTo(OverlayName, Overlay.x+dx,Overlay.y+dy)          // DRY
     }
 
@@ -5174,9 +5065,16 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
   /**** openDialog ****/
 
     public openDialog (Descriptor:Indexable):void {
-      expectPlainObject('dialog descriptor',Descriptor)
-        Descriptor.asDialog = true
-      return this.openOverlay(Descriptor)
+      if (this.OverlayIsOpen(Descriptor.Name)) throwError(
+        `AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`
+      )
+
+      const Dialog = new WAC_Dialog(this,Descriptor)
+
+      this._OverlayList.push(Dialog)
+      this.rerender()
+
+      if (Dialog.onOpen != null) { Dialog.onOpen(Dialog) }
     }
 
   /**** closeDialog ****/
@@ -6891,6 +6789,62 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       }
     }
 
+  /**** Overlay - which Overlay contains this widget? ****/
+
+    public get Overlay ():WAC_AppletOverlay|WAC_WidgetOverlay|undefined {
+      const View = this.View
+      if (View == null) { return undefined }
+
+      const OverlayElement = View.closest(
+        '.WAC.AppletOverlay,.WAC.Dialog,.WAC.WidgetOverlay'
+      )
+      if (OverlayElement == null) { return undefined }
+
+      return (OverlayElement as Indexable)['_Overlay']
+    }
+    public set Overlay (_:WAC_AppletOverlay|WAC_WidgetOverlay|undefined) { throwReadOnlyError('Overlay') }
+
+  /**** AppletOverlay - which AppletOverlay contains this widget? ****/
+
+    public get AppletOverlay ():WAC_AppletOverlay|undefined {
+      const View = this.View
+      if (View == null) { return undefined }
+
+      const OverlayElement = View.closest(
+        '.WAC.AppletOverlay,.WAC.Dialog'
+      )
+      if (OverlayElement == null) { return undefined }
+
+      return (OverlayElement as Indexable)['_Overlay']
+    }
+    public set AppletOverlay (_:WAC_AppletOverlay|undefined) { throwReadOnlyError('AppletOverlay') }
+
+  /**** Dialog - which AppletOverlay contains this widget? ****/
+
+    public get Dialog ():WAC_Dialog|undefined {
+      const View = this.View
+      if (View == null) { return undefined }
+
+      const OverlayElement = View.closest('.WAC.Dialog')
+      if (OverlayElement == null) { return undefined }
+
+      return (OverlayElement as Indexable)['_Overlay']
+    }
+    public set Dialog (_:WAC_Dialog|undefined) { throwReadOnlyError('Dialog') }
+
+  /**** WidgetOverlay - which WidgetOverlay contains this widget? ****/
+
+    public get WidgetOverlay ():WAC_WidgetOverlay|undefined {
+      const View = this.View
+      if (View == null) { return undefined }
+
+      const OverlayElement = View.closest('.WAC.WidgetOverlay')
+      if (OverlayElement == null) { return undefined }
+
+      return (OverlayElement as Indexable)['_Overlay']
+    }
+    public set WidgetOverlay (_:WAC_WidgetOverlay|undefined) { throwReadOnlyError('WidgetOverlay') }
+
   /**** OverlayNamed ****/
 
     private _OverlayList:WAC_WidgetOverlay[] = []
@@ -6925,75 +6879,11 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
   /**** openOverlay ****/
 
     public openOverlay (Descriptor:Indexable):void {
-      expectPlainObject('overlay descriptor',Descriptor)
-        expectName              ('overlay name',Descriptor.Name)
-        allowBoolean        ('overlay modality',Descriptor.isModal)
-        allowLocation   ('overlay x coordinate',Descriptor.x)
-        allowLocation   ('overlay y coordinate',Descriptor.y)
-        allowDimension         ('overlay width',Descriptor.Width)
-        allowDimension        ('overlay height',Descriptor.Height)
-        allowDimension ('minimal overlay width',Descriptor.minWidth)
-        allowDimension ('maximal overlay width',Descriptor.maxWidth)
-        allowDimension('minimal overlay height',Descriptor.minHeight)
-        allowDimension('maximal overlay height',Descriptor.maxHeight)
-        allowFunction      ('"onOpen" callback',Descriptor.onOpen)
-        allowFunction     ('"onClose" callback',Descriptor.onClose)
-      let {
-        Name, Title, isModal,
-        x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
-        onOpen,onClose
-      } = Descriptor
-
       if (this.OverlayIsOpen(Descriptor.Name)) throwError(
         `AlreadyOpen: an overlay named ${quoted(Descriptor.Name)} is already open`
       )
 
-      if (isModal == null) { isModal = false }
-
-      if (x == null) { x = 0 }
-      if (y == null) { y = 0 }
-
-      if (minWidth  == null) { minWidth  = 0 }
-      if (minHeight == null) { minHeight = 0 }
-
-      let SourceWidget:WAC_Widget, SourceWidgetPath:WAC_Path
-        switch (true) {
-          case null:
-          case undefined:
-            throwError('MissingArgument: no source widget path given')
-          case ValueIsPath(Descriptor.SourceWidget):
-            SourceWidgetPath = Descriptor.SourceWidget as WAC_Path
-
-            SourceWidget = this.Applet?.WidgetAtPath(SourceWidgetPath) as WAC_Widget
-            if (SourceWidget == null) throwError(
-              `NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`
-            )
-            break
-          case ValueIsWidget(Descriptor.SourceWidget):
-            SourceWidget     = Descriptor.SourceWidget as WAC_Widget
-            SourceWidgetPath = SourceWidget.Path
-            break
-          default:
-            throwError(
-              'InvalidArgument: the given source widget is neither a widget ' +
-              'nor a widget path'
-            )
-        }
-      if ((Width == null) || (Height == null)) {
-        let SourceGeometry = SourceWidget.Geometry
-
-        if (Width  == null) { Width  = SourceGeometry.Width }
-        if (Height == null) { Height = SourceGeometry.Height }
-      }
-      Width  = Math.max(minWidth  || 0, Math.min(Width, maxWidth  || Infinity))
-      Height = Math.max(minHeight || 0, Math.min(Height,maxHeight || Infinity))
-
-      const Overlay:WAC_WidgetOverlay = {
-        Name, normalizedName:Name.toLowerCase(), SourceWidgetPath,
-        isModal,
-        x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
-        onOpen,onClose
-      }
+      const Overlay = new WAC_WidgetOverlay(this,Descriptor)
 
       this._OverlayList.push(Overlay)
       this.rerender()
@@ -7008,6 +6898,9 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       if (OverlayIndex < 0) { return }
 
       const [ Overlay ] = this._OverlayList.splice(OverlayIndex,1)
+// @ts-ignore TS2445 I know, it's a hack, but allow access to protected members here
+      if (Overlay._View != null) { Overlay._View._releaseWidgets() }
+
       this.rerender()
 
       if (Overlay.onClose != null) { Overlay.onClose(Overlay) }
@@ -7170,6 +7063,526 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     /**** common properties including "activeScript" ****/
 
       super._deserializeConfigurationFrom(Serialization)
+    }
+  }
+
+//------------------------------------------------------------------------------
+//--                            WAC_AppletOverlay                             --
+//------------------------------------------------------------------------------
+
+  class WAC_AppletOverlay {
+    protected _Applet:WAC_Applet
+    protected _View:WAC_AppletOverlayView|undefined
+
+    protected _Name:WAC_Name
+    protected _normalizedName:WAC_Name
+
+    protected _isModal:boolean
+    protected _Anchoring:any[]
+
+    protected _x:WAC_Location|undefined;  protected _Width:WAC_Dimension
+    protected _y:WAC_Location|undefined;  protected _Height:WAC_Dimension
+
+    protected _minWidth:WAC_Dimension;   protected _maxWidth:WAC_Dimension|undefined
+    protected _minHeight:WAC_Dimension;  protected _maxHeight:WAC_Dimension|undefined
+
+    protected _SourceWidgetPath:WAC_Path
+
+    protected _onOpen:Function|undefined
+    protected _onClose:Function|undefined
+
+    public constructor (Applet:WAC_Applet, Descriptor:Indexable) {
+      expectApplet('overlay applet',Applet)
+      this._Applet = Applet
+
+      expectPlainObject('overlay descriptor',Descriptor)
+        expectName              ('overlay name',Descriptor.Name)
+        allowBoolean        ('overlay modality',Descriptor.isModal)
+        allowList                  ('anchoring',Descriptor.Anchoring)
+        allowLocation   ('overlay x coordinate',Descriptor.x)
+        allowLocation   ('overlay y coordinate',Descriptor.y)
+        allowDimension         ('overlay width',Descriptor.Width)
+        allowDimension        ('overlay height',Descriptor.Height)
+        allowDimension ('minimal overlay width',Descriptor.minWidth)
+        allowDimension ('maximal overlay width',Descriptor.maxWidth)
+        allowDimension('minimal overlay height',Descriptor.minHeight)
+        allowDimension('maximal overlay height',Descriptor.maxHeight)
+        allowFunction      ('"onOpen" callback',Descriptor.onOpen)
+        allowFunction     ('"onClose" callback',Descriptor.onClose)
+      let {
+        Name, isModal,Anchoring,
+        x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
+        onOpen,onClose
+      } = Descriptor
+
+      if (Anchoring != null) {
+        expectOneOf('horizontal anchoring',Anchoring[0],['left','right'])
+        expectOneOf  ('vertical anchoring',Anchoring[1],['top','bottom'])
+      }
+
+      this._Name           = Name
+      this._normalizedName = Name.toLowerCase()
+
+      this._isModal   = (isModal || false)
+      this._Anchoring = (Anchoring == null ? ['left','top'] : Anchoring.slice(0,2))
+
+      this._minWidth  = Math.max(0,minWidth  || 0);  this._maxWidth  = maxWidth
+      this._minHeight = Math.max(0,minHeight || 0);  this._maxHeight = maxHeight
+
+      this._x = x;  this._onOpen  = onOpen
+      this._y = y;  this._onClose = onClose
+
+      let SourceWidget:WAC_Widget, SourceWidgetPath:WAC_Path
+        switch (true) {
+          case Descriptor.SourceWidget == null:
+            throwError('MissingArgument: no source widget path given')
+          case ValueIsPath(Descriptor.SourceWidget):
+            SourceWidgetPath = Descriptor.SourceWidget as WAC_Path
+
+            SourceWidget = Applet.WidgetAtPath(SourceWidgetPath) as WAC_Widget
+            if (SourceWidget == null) throwError(
+              `NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`
+            )
+            break
+          case ValueIsWidget(Descriptor.SourceWidget):
+            SourceWidget     = Descriptor.SourceWidget as WAC_Widget
+            SourceWidgetPath = SourceWidget.Path
+            break
+          default:
+            throwError(
+              'InvalidArgument: the given source widget is neither a widget ' +
+              'nor a widget path'
+            )
+        }
+      this._SourceWidgetPath = SourceWidgetPath
+
+      if ((Width == null) || (Height == null)) {
+        let SourceGeometry = SourceWidget.Geometry
+
+        if (Width  == null) { Width  = SourceGeometry.Width }
+        if (Height == null) { Height = SourceGeometry.Height }
+      }
+      this._Width  = Math.max(this._minWidth,  Math.min(Width,  maxWidth  || Infinity))
+      this._Height = Math.max(this._minHeight, Math.min(Height, maxHeight || Infinity))
+    }
+
+  /**** Applet ****/
+
+    public get Applet ():WAC_Applet  { return this._Applet }
+    public set Applet (_:WAC_Applet) { throwReadOnlyError('Applet') }
+
+  /**** Name ****/
+
+    public get Name ():WAC_Name  { return this._Name }
+    public set Name (_:WAC_Name) { throwReadOnlyError('Name') }
+
+  /**** normalizedName ****/
+
+    public get normalizedName ():WAC_Name  { return this._normalizedName }
+    public set normalizedName (_:WAC_Name) { throwReadOnlyError('normalizedName') }
+
+  /**** isModal ****/
+
+    public get isModal ():boolean  { return this._isModal }
+    public set isModal (_:boolean) { throwReadOnlyError('isModal') }
+
+  /**** Anchoring ****/
+
+    public get Anchoring ():any[]  { return this._Anchoring.slice() }
+    public set Anchoring (_:any[]) { throwReadOnlyError('Anchoring') }
+
+  /**** SourceWidgetPath ****/
+
+    public get SourceWidgetPath ():WAC_Path  { return this._SourceWidgetPath }
+    public set SourceWidgetPath (_:WAC_Path) { throwReadOnlyError('SourceWidgetPath') }
+
+  /**** onOpen ****/
+
+    public get onOpen ():Function|undefined  { return this._onOpen }
+    public set onOpen (_:Function|undefined) { throwReadOnlyError('onOpen') }
+
+  /**** onClose ****/
+
+    public get onClose ():Function|undefined  { return this._onClose }
+    public set onClose (_:Function|undefined) { throwReadOnlyError('onClose') }
+
+  /**** x ****/
+
+    public get x ():WAC_Location|undefined     { return this._x }
+    public set x (newX:WAC_Location|undefined) {
+      allowLocation('overlay x position',newX)
+      if (this._x !== newX) {
+        this._x = newX
+        this._Applet.rerender()
+      }
+    }
+
+  /**** y ****/
+
+    public get y ():WAC_Location|undefined     { return this._y }
+    public set y (newY:WAC_Location|undefined) {
+      allowLocation('overlay y position',newY)
+      if (this._y !== newY) {
+        this._y = newY
+        this._Applet.rerender()
+      }
+    }
+
+  /**** Width ****/
+
+    public get Width ():WAC_Dimension { return this._Width }
+    public set Width (newWidth:WAC_Dimension) {
+      expectDimension('overlay width',newWidth)
+      if (this._Width !== newWidth) {
+        this._Width = newWidth
+        this._Applet.rerender()
+      }
+    }
+
+  /**** Height ****/
+
+    public get Height ():WAC_Dimension { return this._Height }
+    public set Height (newHeight:WAC_Dimension) {
+      expectDimension('overlay height',newHeight)
+      if (this._Height !== newHeight) {
+        this._Height = newHeight
+        this._Applet.rerender()
+      }
+    }
+
+  /**** minWidth ****/
+
+    public get minWidth ():WAC_Dimension { return this._minWidth }
+    public set minWidth (newValue:WAC_Dimension) {
+      expectDimension('minimal overlay width',newValue)
+      if (this._minWidth !== newValue) {
+        this._minWidth = newValue
+        this._Applet.rerender()
+      }
+    }
+
+  /**** maxWidth ****/
+
+    public get maxWidth ():WAC_Dimension|undefined { return this._maxWidth }
+    public set maxWidth (newValue:WAC_Dimension|undefined) {
+      allowDimension('maximal overlay width',newValue)
+      if (this._maxWidth !== newValue) {
+        this._maxWidth = newValue
+        this._Applet.rerender()
+      }
+    }
+
+  /**** minHeight ****/
+
+    public get minHeight ():WAC_Dimension { return this._minHeight }
+    public set minHeight (newValue:WAC_Dimension) {
+      expectDimension('minimal overlay height',newValue)
+      if (this._minHeight !== newValue) {
+        this._minHeight = newValue
+        this._Applet.rerender()
+      }
+    }
+
+  /**** maxHeight ****/
+
+    public get maxHeight ():WAC_Dimension|undefined { return this._maxHeight }
+    public set maxHeight (newValue:WAC_Dimension|undefined) {
+      allowDimension('maximal overlay height',newValue)
+      if (this._maxHeight !== newValue) {
+        this._maxHeight = newValue
+        this._Applet.rerender()
+      }
+    }
+
+  /**** close ****/
+
+    public close ():void {
+      this._Applet.closeOverlay(this._Name)
+    }
+  }
+
+//------------------------------------------------------------------------------
+//--                                WAC_Dialog                                --
+//------------------------------------------------------------------------------
+
+  class WAC_Dialog extends WAC_AppletOverlay {
+    protected _Title:WAC_Textline|undefined
+
+    protected _isClosable:boolean
+    protected _isDraggable:boolean
+    protected _isResizable:boolean
+
+    public constructor (Applet:WAC_Applet, Descriptor:Indexable) {
+      super(Applet,Descriptor)
+
+      allowTextline      ('dialog title',Descriptor.Title)
+      allowBoolean ('dialog closability',Descriptor.isClosable)
+      allowBoolean('dialog draggability',Descriptor.isDraggable)
+      allowBoolean('dialog resizability',Descriptor.isResizable)
+
+      let {
+        Title, isClosable,isDraggable,isResizable
+      } = Descriptor
+
+      this._isClosable  = (isClosable  || false)
+      this._isDraggable = (isDraggable || false)
+      this._isResizable = (isResizable || false)
+
+      if (Title == null) {
+        if (isClosable || isDraggable) { Title = this._Name }
+      }
+      this._Title = Title
+
+    /**** allow room for dialog decoration ****/
+
+      if (isClosable) { this._minWidth = Math.max(30+10,this._minWidth) }
+
+      if ((Title != null) || isClosable || isDraggable) { this._Height += 30; this._minHeight += 30 }
+      if (isResizable)                                  { this._Height += 10; this._minHeight += 10 }
+    }
+
+  /**** Title ****/
+
+    public get Title ():WAC_Textline|undefined  { return this._Title }
+    public set Title (_:WAC_Textline|undefined) { throwReadOnlyError('Title') }
+
+  /**** isClosable ****/
+
+    public get isClosable ():boolean  { return this._isClosable }
+    public set isClosable (_:boolean) { throwReadOnlyError('isClosable') }
+
+  /**** isDraggable ****/
+
+    public get isDraggable ():boolean  { return this._isDraggable }
+    public set isDraggable (_:boolean) { throwReadOnlyError('isDraggable') }
+
+  /**** isResizable ****/
+
+    public get isResizable ():boolean  { return this._isResizable }
+    public set isResizable (_:boolean) { throwReadOnlyError('isResizable') }
+
+
+  }
+
+//------------------------------------------------------------------------------
+//--                            WAC_WidgetOverlay                             --
+//------------------------------------------------------------------------------
+
+  class WAC_WidgetOverlay {
+    protected _Widget:WAC_Widget
+    protected _View:WAC_WidgetOverlayView|undefined
+
+    protected _Name:WAC_Name
+    protected _normalizedName:WAC_Name
+
+    protected _isModal:boolean
+
+    protected _x:WAC_Location;  protected _Width:WAC_Dimension
+    protected _y:WAC_Location;  protected _Height:WAC_Dimension
+
+    protected _minWidth:WAC_Dimension;   protected _maxWidth:WAC_Dimension|undefined
+    protected _minHeight:WAC_Dimension;  protected _maxHeight:WAC_Dimension|undefined
+
+    protected _SourceWidgetPath:WAC_Path
+
+    protected _onOpen:Function|undefined
+    protected _onClose:Function|undefined
+
+    public constructor (Widget:WAC_Widget, Descriptor:Indexable) {
+      expectWidget('overlay widget',Widget)
+      this._Widget = Widget
+
+      expectPlainObject('overlay descriptor',Descriptor)
+        expectName              ('overlay name',Descriptor.Name)
+        allowBoolean        ('overlay modality',Descriptor.isModal)
+        allowLocation   ('overlay x coordinate',Descriptor.x)
+        allowLocation   ('overlay y coordinate',Descriptor.y)
+        allowDimension         ('overlay width',Descriptor.Width)
+        allowDimension        ('overlay height',Descriptor.Height)
+        allowDimension ('minimal overlay width',Descriptor.minWidth)
+        allowDimension ('maximal overlay width',Descriptor.maxWidth)
+        allowDimension('minimal overlay height',Descriptor.minHeight)
+        allowDimension('maximal overlay height',Descriptor.maxHeight)
+        allowFunction      ('"onOpen" callback',Descriptor.onOpen)
+        allowFunction     ('"onClose" callback',Descriptor.onClose)
+      let {
+        Name, isModal,
+        x,y, Width,Height, minWidth,maxWidth, minHeight,maxHeight,
+        onOpen,onClose
+      } = Descriptor
+
+      this._Name           = Name
+      this._normalizedName = Name.toLowerCase()
+
+      this._isModal = (isModal || false)
+
+      this._minWidth  = Math.max(0,minWidth  || 0);  this._maxWidth  = maxWidth
+      this._minHeight = Math.max(0,minHeight || 0);  this._maxHeight = maxHeight
+
+      this._x = (x || 0);  this._onOpen  = onOpen
+      this._y = (y || 0);  this._onClose = onClose
+
+      let SourceWidget:WAC_Widget, SourceWidgetPath:WAC_Path
+        switch (true) {
+          case Descriptor.SourceWidget == null:
+            throwError('MissingArgument: no source widget path given')
+          case ValueIsPath(Descriptor.SourceWidget):
+            SourceWidgetPath = Descriptor.SourceWidget as WAC_Path
+
+            SourceWidget = Widget.Applet?.WidgetAtPath(SourceWidgetPath) as WAC_Widget
+            if (SourceWidget == null) throwError(
+              `NoSuchWidget: no widget at path ${quoted(Descriptor.SourceWidget)} found`
+            )
+            break
+          case ValueIsWidget(Descriptor.SourceWidget):
+            SourceWidget     = Descriptor.SourceWidget as WAC_Widget
+            SourceWidgetPath = SourceWidget.Path
+            break
+          default:
+            throwError(
+              'InvalidArgument: the given source widget is neither a widget ' +
+              'nor a widget path'
+            )
+        }
+      this._SourceWidgetPath = SourceWidgetPath
+
+      if ((Width == null) || (Height == null)) {
+        let SourceGeometry = SourceWidget.Geometry
+
+        if (Width  == null) { Width  = SourceGeometry.Width }
+        if (Height == null) { Height = SourceGeometry.Height }
+      }
+      this._Width  = Math.max(this._minWidth,  Math.min(Width,  maxWidth  || Infinity))
+      this._Height = Math.max(this._minHeight, Math.min(Height, maxHeight || Infinity))
+    }
+
+  /**** Widget ****/
+
+    public get Widget ():WAC_Widget  { return this._Widget }
+    public set Widget (_:WAC_Widget) { throwReadOnlyError('Widget') }
+
+  /**** Name ****/
+
+    public get Name ():WAC_Name  { return this._Name }
+    public set Name (_:WAC_Name) { throwReadOnlyError('Name') }
+
+  /**** normalizedName ****/
+
+    public get normalizedName ():WAC_Name  { return this._normalizedName }
+    public set normalizedName (_:WAC_Name) { throwReadOnlyError('normalizedName') }
+
+  /**** isModal ****/
+
+    public get isModal ():boolean  { return this._isModal }
+    public set isModal (_:boolean) { throwReadOnlyError('isModal') }
+
+  /**** SourceWidgetPath ****/
+
+    public get SourceWidgetPath ():WAC_Path  { return this._SourceWidgetPath }
+    public set SourceWidgetPath (_:WAC_Path) { throwReadOnlyError('SourceWidgetPath') }
+
+  /**** onOpen ****/
+
+    public get onOpen ():Function|undefined  { return this._onOpen }
+    public set onOpen (_:Function|undefined) { throwReadOnlyError('onOpen') }
+
+  /**** onClose ****/
+
+    public get onClose ():Function|undefined  { return this._onClose }
+    public set onClose (_:Function|undefined) { throwReadOnlyError('onClose') }
+
+  /**** x ****/
+
+    public get x ():WAC_Location     { return this._x }
+    public set x (newX:WAC_Location) {
+      expectLocation('overlay x position',newX)
+      if (this._x !== newX) {
+        this._x = newX
+        this._Widget.rerender()
+      }
+    }
+
+  /**** y ****/
+
+    public get y ():WAC_Location     { return this._y }
+    public set y (newY:WAC_Location) {
+      expectLocation('overlay y position',newY)
+      if (this._y !== newY) {
+        this._y = newY
+        this._Widget.rerender()
+      }
+    }
+
+  /**** Width ****/
+
+    public get Width ():WAC_Dimension { return this._Width }
+    public set Width (newWidth:WAC_Dimension) {
+      expectDimension('overlay width',newWidth)
+      if (this._Width !== newWidth) {
+        this._Width = newWidth
+        this._Widget.rerender()
+      }
+    }
+
+  /**** Height ****/
+
+    public get Height ():WAC_Dimension { return this._Height }
+    public set Height (newHeight:WAC_Dimension) {
+      expectDimension('overlay height',newHeight)
+      if (this._Height !== newHeight) {
+        this._Height = newHeight
+        this._Widget.rerender()
+      }
+    }
+
+  /**** minWidth ****/
+
+    public get minWidth ():WAC_Dimension { return this._minWidth }
+    public set minWidth (newValue:WAC_Dimension) {
+      expectDimension('minimal overlay width',newValue)
+      if (this._minWidth !== newValue) {
+        this._minWidth = newValue
+        this._Widget.rerender()
+      }
+    }
+
+  /**** maxWidth ****/
+
+    public get maxWidth ():WAC_Dimension|undefined { return this._maxWidth }
+    public set maxWidth (newValue:WAC_Dimension|undefined) {
+      allowDimension('maximal overlay width',newValue)
+      if (this._maxWidth !== newValue) {
+        this._maxWidth = newValue
+        this._Widget.rerender()
+      }
+    }
+
+  /**** minHeight ****/
+
+    public get minHeight ():WAC_Dimension { return this._minHeight }
+    public set minHeight (newValue:WAC_Dimension) {
+      expectDimension('minimal overlay height',newValue)
+      if (this._minHeight !== newValue) {
+        this._minHeight = newValue
+        this._Widget.rerender()
+      }
+    }
+
+  /**** maxHeight ****/
+
+    public get maxHeight ():WAC_Dimension|undefined { return this._maxHeight }
+    public set maxHeight (newValue:WAC_Dimension|undefined) {
+      allowDimension('maximal overlay height',newValue)
+      if (this._maxHeight !== newValue) {
+        this._maxHeight = newValue
+        this._Widget.rerender()
+      }
+    }
+
+  /**** close ****/
+
+    public close ():void {
+      this._Widget.closeOverlay(this._Name)
     }
   }
 
@@ -7920,12 +8333,15 @@ console.warn('file drop error',Signal)
         }
       }
 
+      function _onClick (Event:any) { my.on('click')(Event) }
+
     /**** actual rendering ****/
 
       return html`<img class="WAC Content ImageView"
         src=${ImageURL || ''}
         style="object-fit:${ImageScaling}; object-position:${ImageAlignment}"
         onDragOver=${allowsDropping && _onDragOver} onDrop=${allowsDropping && _onDrop}
+        onClick=${_onClick}
       />`
     })
   }
@@ -11281,10 +11697,11 @@ console.log('rendering...')
       >
         ${openOverlays.map((Overlay:WAC_WidgetOverlay, Index:number) => html`
           ${(Index === lastOverlayIndex)
-            ? html`<${WAC_WidgetUnderlay} Widget=${Widget} Overlay=${Overlay}/>`
-            : ''
+            ? html`<${WAC_WidgetUnderlay} Widget=${Widget} Overlay=${Overlay}>
+              <${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>
+            </>`
+            : html`<${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>`
           }
-          <${WAC_WidgetOverlayView} Widget=${Widget} Overlay=${Overlay}/>
         `)}
       </div>`: ''}`
     }
@@ -11351,14 +11768,17 @@ console.log('rendering...')
   /**** componentDidMount ****/
 
     public componentDidMount ():void {
+// @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
       this._Overlay._View = this
-      ;(this as Component).base['Applet'] = this._Applet
+      ;(this as Component).base['Applet']  = this._Applet
+      ;(this as Component).base['Overlay'] = this._Overlay
     }
 
   /**** componentWillUnmount ****/
 
     public componentWillUnmount ():void {
 //    this._releaseWidgets()  // may be too late, is therefore done when closing
+// @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
       delete this._Overlay._View
     }
 
@@ -11493,12 +11913,15 @@ console.log('rendering...')
       const { Applet, Overlay } = PropSet
         this._Applet  = Applet
         this._Overlay = Overlay
-      const {
+      let {
         SourceWidgetPath,
-        asDialog, fromRight, fromBottom,
         Title, isClosable, isDraggable, isResizable,
-        x,y, Width,Height,
+        x,y, Width,Height, Anchoring
       } = Overlay
+
+      const asDialog   = (Overlay instanceof WAC_Dialog)
+      const fromRight  = (Anchoring[0] === 'right')
+      const fromBottom = (Anchoring[1] === 'bottom')
 
     /**** leave here if overlay should not be shown... ****/
 
@@ -11512,6 +11935,9 @@ console.log('rendering...')
       if (Visibility === false) { return '' }
 
     /**** ...otherwise continue as usual ****/
+
+      if (x == null) { x = Overlay.x =  (Applet.Width-Width) /2 }
+      if (y == null) { y = Overlay.y = (Applet.Height-Height)/2 }
 
       const hasTitlebar = asDialog && (
         (Title != null) || isDraggable || isClosable
@@ -11680,7 +12106,7 @@ console.log('rendering...')
       return html`<div class="WAC ${modal} WidgetUnderlay"
         onMouseDown=${handleEvent} onPointerDown=${handleEvent}
         onTouchStart=${handleEvent}
-      />`
+      >${PropSet.children}</>`
     }
   }
 
@@ -11690,6 +12116,9 @@ console.log('rendering...')
 
   class WAC_WidgetOverlayView extends Component {
     protected _Widget:WAC_Widget|undefined
+// @ts-ignore TS2564 will be initialized in renderer
+    protected _Overlay:WAC_WidgetOverlay
+
     protected _shownWidgets:WAC_Widget[] = []
 
   /**** _releaseWidgets ****/
@@ -11701,13 +12130,18 @@ console.log('rendering...')
   /**** componentDidMount ****/
 
     public componentDidMount ():void {
-      (this as Component).base['Widget'] = this._Widget
+// @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
+      this._Overlay._View = this
+      ;(this as Component).base['Widget']  = this._Widget
+      ;(this as Component).base['Overlay'] = this._Overlay
     }
 
   /**** componentWillUnmount ****/
 
     public componentWillUnmount ():void {
-      this._releaseWidgets()
+//    this._releaseWidgets()  // may be too late, is therefore done when closing
+// @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
+      delete this._Overlay._View
     }
 
   /**** _GeometryRelativeTo  ****/
@@ -11768,7 +12202,8 @@ console.log('rendering...')
       this._releaseWidgets()
 
       const { Widget, Overlay } = PropSet
-      this._Widget = Widget
+      this._Widget  = Widget
+      this._Overlay = Overlay
 
       const { SourceWidgetPath, x,y, Width,Height } = Overlay
 
@@ -11879,7 +12314,7 @@ console.log('rendering...')
       case ValueIsWidget(Value): return (Value as WAC_Widget).Applet
       case (Value instanceof Event):
         if (Value.target != null) {
-          Value = Value.target.closest(
+          Value = (Value.target as Indexable).closest(
             '.WAC.Applet,.WAC.Page,.WAC.Widget,' +
             '.WAC.AppletOverlay,.WAC.Dialog,' +
             '.WAC.WidgetOverlay,.WAC.WidgetUnderlay'
@@ -11906,7 +12341,7 @@ console.log('rendering...')
       case ValueIsWidget(Value): return (Value as WAC_Widget).Page
       case (Value instanceof Event):
         if (Value.target != null) {
-          Value = Value.target.closest(
+          Value = (Value.target as Indexable).closest(
             '.WAC.Applet,.WAC.Page,.WAC.Widget,' +
             '.WAC.AppletOverlay,.WAC.Dialog,' +
             '.WAC.WidgetOverlay,.WAC.WidgetUnderlay'
@@ -11931,7 +12366,7 @@ console.log('rendering...')
       case ValueIsWidget(Value): return (Value as WAC_Widget)
       case (Value instanceof Event):
         if (Value.target != null) {
-          Value = Value.target.closest(
+          Value = (Value.target as Indexable).closest(
             '.WAC.Widget,' +
             '.WAC.WidgetOverlay,.WAC.WidgetUnderlay'
           )
