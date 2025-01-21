@@ -3270,7 +3270,7 @@ export class WAC_Applet extends WAC_Visual {
     }
     /**** AssetURL ****/
     AssetURL(relativeURL) {
-        expectURL('asset URL', relativeURL);
+        expectURL('asset URL', relativeURL + '/.'); // because AssetURL is incomplete
         switch (true) {
             case URLhasSchema(relativeURL):
                 return relativeURL;
