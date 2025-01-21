@@ -3476,6 +3476,7 @@ export class WAC_Applet extends WAC_Visual {
             console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`, Signal);
             // @ts-ignore TS7053 allow indexing
             this._BehaviorPool[Category][normalizedBehavior].pendingError = Signal;
+            return;
         }
         this.registerBehaviorOfCategory(Category, Behavior, pendingScript);
         this.rerender();
@@ -4512,15 +4513,28 @@ export class WAC_Applet extends WAC_Visual {
         delete this._View;
         const AppletName = this._Name;
         delete Serialization.Name;
+        this._isReady = false;
         this.clear();
+        this._BehaviorPool = {
+            applet: Object.create(null),
+            page: Object.create(null),
+            widget: Object.create(null),
+        };
+        registerIntrinsicBehaviorsIn(this);
+        this._deserializeBehaviorsFrom(Serialization);
         this._deserializeConfigurationFrom(Serialization);
         this._deserializePagesFrom(Serialization);
-        this._Name = AppletName;
-        this._View = AppletView;
-        this.on('mount')();
+        if (this._PageList.length === 0) {
+            this._deserializePagesFrom({ PageList: [
+                    { WidgetList: [] }
+                ] });
+        }
         if (this.visitedPage == null) {
             this.visitPage(this.PageList[0]);
         }
+        this._Name = AppletName; // just to be safe, should not be necessary
+        this._View = AppletView;
+        makeVisualReady(this);
         this.rerender();
     }
 }
