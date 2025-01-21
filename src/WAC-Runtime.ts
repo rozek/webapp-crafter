@@ -11052,6 +11052,8 @@ console.log('rendering...')
     public componentDidMount ():void {
       const Applet = this._Applet as WAC_Applet
 
+      (this as Component).base['Applet'] = Applet
+
       Applet['_View'] = (this as Component).base
       Applet.on('mount')()
     }
@@ -11140,6 +11142,8 @@ console.log('rendering...')
     public componentDidMount ():void {
       const Page = this._Page as WAC_Page
 
+      (this as Component).base['Page'] = Page
+
       Page['_View'] = (this as Component).base
       Page.on('mount')()
     }
@@ -11220,6 +11224,8 @@ console.log('rendering...')
 
     public componentDidMount ():void {
       const Widget = this._Widget as WAC_Widget
+
+      (this as Component).base['Widget'] = Widget
 
       Widget['_View'] = (this as Component).base
       Widget.on('mount')()
@@ -11346,6 +11352,7 @@ console.log('rendering...')
 
     public componentDidMount ():void {
       this._Overlay._View = this
+      ;(this as Component).base['Applet'] = this._Applet
     }
 
   /**** componentWillUnmount ****/
@@ -11643,7 +11650,11 @@ console.log('rendering...')
   ]
 
   class WAC_WidgetUnderlay extends Component {
+    protected _Widget:WAC_Widget|undefined
+
     public componentDidMount () {
+      (this as Component).base['Widget'] = this._Widget
+
       WAC_WidgetUnderlay_EventTypes.forEach((EventType:string) => {
         (this as Component).base.addEventListener(EventType,consumeEvent)
       })
@@ -11657,6 +11668,7 @@ console.log('rendering...')
 
     public render (PropSet:Indexable):any {
       const { Widget, Overlay } = PropSet
+      this._Widget = Widget
 
       const handleEvent = (Event:Event) => {
         consumeEvent(Event)
@@ -11677,12 +11689,19 @@ console.log('rendering...')
 //------------------------------------------------------------------------------
 
   class WAC_WidgetOverlayView extends Component {
+    protected _Widget:WAC_Widget|undefined
     protected _shownWidgets:WAC_Widget[] = []
 
   /**** _releaseWidgets ****/
 
     protected _releaseWidgets ():void {
       this._shownWidgets.forEach((Widget:Indexable) => Widget._Pane = undefined)
+    }
+
+  /**** componentDidMount ****/
+
+    public componentDidMount ():void {
+      (this as Component).base['Widget'] = this._Widget
     }
 
   /**** componentWillUnmount ****/
@@ -11749,6 +11768,8 @@ console.log('rendering...')
       this._releaseWidgets()
 
       const { Widget, Overlay } = PropSet
+      this._Widget = Widget
+
       const { SourceWidgetPath, x,y, Width,Height } = Overlay
 
     /**** repositioning on viewport ****/
@@ -11849,7 +11870,79 @@ console.log('rendering...')
     rerender()
   }
 
-//------------------------------------------------------------------------------
+/**** AppletFor ****/
+
+  export function AppletFor (Value:any):WAC_Applet|undefined {
+    switch (true) {
+      case ValueIsApplet(Value): return (Value as WAC_Applet)
+      case ValueIsPage(Value):   return (Value as WAC_Page).Applet
+      case ValueIsWidget(Value): return (Value as WAC_Widget).Applet
+      case (Value instanceof Event):
+        if (Value.target != null) {
+          Value = Value.target.closest(
+            '.WAC.Applet,.WAC.Page,.WAC.Widget,' +
+            '.WAC.AppletOverlay,.WAC.Dialog,' +
+            '.WAC.WidgetOverlay,.WAC.WidgetUnderlay'
+          )
+        } else { break }
+      case (Value instanceof Element):
+        switch (true) {
+          case Value.Applet != null: return (Value.Applet as WAC_Applet)
+          case Value.Page   != null: return (Value.Page   as WAC_Page).Applet
+          case Value.Widget != null: return (Value.Widget as WAC_Widget).Applet
+        }
+    }
+
+    window.alert('could not find any visual for this DOM element')
+    return undefined
+  }
+
+/**** PageFor ****/
+
+  export function PageFor (Value:any):WAC_Page|undefined {
+    switch (true) {
+      case ValueIsApplet(Value): return (Value as WAC_Applet).visitedPage
+      case ValueIsPage(Value):   return (Value as WAC_Page)
+      case ValueIsWidget(Value): return (Value as WAC_Widget).Page
+      case (Value instanceof Event):
+        if (Value.target != null) {
+          Value = Value.target.closest(
+            '.WAC.Applet,.WAC.Page,.WAC.Widget,' +
+            '.WAC.AppletOverlay,.WAC.Dialog,' +
+            '.WAC.WidgetOverlay,.WAC.WidgetUnderlay'
+          )
+        } else { break }
+      case (Value instanceof Element):
+        switch (true) {
+          case Value.Applet != null: return (Value.Applet as WAC_Applet).visitedPage
+          case Value.Page   != null: return (Value.Page   as WAC_Page)
+          case Value.Widget != null: return (Value.Widget as WAC_Widget).Page
+        }
+    }
+
+    window.alert('could not find any visual for this DOM element')
+    return undefined
+  }
+
+/**** WidgetFor ****/
+
+  export function WidgetFor (Value:any):WAC_Widget|undefined {
+    switch (true) {
+      case ValueIsWidget(Value): return (Value as WAC_Widget)
+      case (Value instanceof Event):
+        if (Value.target != null) {
+          Value = Value.target.closest(
+            '.WAC.Widget,' +
+            '.WAC.WidgetOverlay,.WAC.WidgetUnderlay'
+          )
+        } else { break }
+      case (Value instanceof Element):
+        if (Value.Widget != null) { return (Value.Widget as WAC_Widget) }
+    }
+
+    window.alert('could not find any widget for this DOM element')
+    return undefined
+  }//------------------------------------------------------------------------------
 //--                               WAC Startup                                --
 //------------------------------------------------------------------------------
 
@@ -12020,6 +12113,10 @@ console.log('rendering...')
     Component, createRef, useRef, useEffect, useCallback,
     fromLocalTo, fromViewportTo, fromDocumentTo,
   })
+
+  global.AppletFor = AppletFor
+  global.PageFor   = PageFor
+  global.WidgetFor = WidgetFor
 
 /**** start WAC up ****/
 
