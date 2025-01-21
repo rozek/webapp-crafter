@@ -4489,6 +4489,11 @@ export class WAC_Applet extends WAC_Visual {
         Applet._deserializeBehaviorsFrom(Serialization);
         Applet._deserializeConfigurationFrom(Serialization);
         Applet._deserializePagesFrom(Serialization);
+        if (Applet._PageList.length === 0) {
+            Applet._deserializePagesFrom({ PageList: [
+                    { WidgetList: [] }
+                ] });
+        }
         makeVisualReady(Applet);
         return Applet;
     }
@@ -4792,6 +4797,7 @@ export class WAC_Page extends WAC_Visual {
         // @ts-ignore TS2446 allow WAC_Page to access a protected member of WAC_Widget
         newWidget._deserializeConfigurationFrom(Serialization);
         makeVisualReady(newWidget);
+        this.rerender();
         return newWidget;
     }
     /**** DuplicateOfWidgetAt ****/
@@ -9552,7 +9558,9 @@ class WAC_combinedView extends Component {
         console.log('rendering...');
         let AppletRendering;
         try {
-            AppletRendering = html `<${WAC_AppletView} Applet=${Applet}/>`;
+            AppletRendering = (Applet.isReady
+                ? html `<${WAC_AppletView} Applet=${Applet}/>`
+                : html `<div class="WAC centered" style="width:100%; height:100%"><div>(loading)</div></div>`);
         }
         catch (Signal) {
             console.warn('uncaught Error in Applet Rendering', Signal);
@@ -9590,7 +9598,7 @@ class WAC_AppletView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         const Applet = this._Applet;
-        this.base['Applet'] = Applet;
+        this.base['_Applet'] = Applet;
         Applet['_View'] = this.base;
         Applet.on('mount')();
     }
@@ -9683,7 +9691,7 @@ class WAC_PageView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         const Page = this._Page;
-        this.base['Page'] = Page;
+        this.base['_Page'] = Page;
         Page['_View'] = this.base;
         Page.on('mount')();
     }
@@ -9754,7 +9762,7 @@ class WAC_WidgetView extends Component {
     /**** componentDidMount ****/
     componentDidMount() {
         const Widget = this._Widget;
-        this.base['Widget'] = Widget;
+        this.base['_Widget'] = Widget;
         Widget['_View'] = this.base;
         Widget.on('mount')();
     }
@@ -9889,8 +9897,8 @@ class WAC_AppletOverlayView extends Component {
     componentDidMount() {
         // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
         this._Overlay._View = this;
-        this.base['Applet'] = this._Applet;
-        this.base['Overlay'] = this._Overlay;
+        this.base['_Applet'] = this._Applet;
+        this.base['_Overlay'] = this._Overlay;
     }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
@@ -10151,7 +10159,7 @@ class WAC_WidgetUnderlay extends Component {
         });
     }
     componentDidMount() {
-        this.base['Widget'] = this._Widget;
+        this.base['_Widget'] = this._Widget;
         WAC_WidgetUnderlay_EventTypes.forEach((EventType) => {
             this.base.addEventListener(EventType, consumeEvent);
         });
@@ -10211,8 +10219,8 @@ class WAC_WidgetOverlayView extends Component {
     componentDidMount() {
         // @ts-ignore TS2445 I know, it's a hack, but allow access to protected member here
         this._Overlay._View = this;
-        this.base['Widget'] = this._Widget;
-        this.base['Overlay'] = this._Overlay;
+        this.base['_Widget'] = this._Widget;
+        this.base['_Overlay'] = this._Overlay;
     }
     /**** componentWillUnmount ****/
     componentWillUnmount() {
@@ -10356,9 +10364,9 @@ export function AppletFor(Value) {
             }
         case (Value instanceof Element):
             switch (true) {
-                case Value.Applet != null: return Value.Applet;
-                case Value.Page != null: return Value.Page.Applet;
-                case Value.Widget != null: return Value.Widget.Applet;
+                case Value.Applet != null: return Value._Applet;
+                case Value.Page != null: return Value._Page.Applet;
+                case Value.Widget != null: return Value._Widget.Applet;
             }
     }
     window.alert('could not find any visual for this DOM element');
@@ -10381,9 +10389,9 @@ export function PageFor(Value) {
             }
         case (Value instanceof Element):
             switch (true) {
-                case Value.Applet != null: return Value.Applet.visitedPage;
-                case Value.Page != null: return Value.Page;
-                case Value.Widget != null: return Value.Widget.Page;
+                case Value.Applet != null: return Value._Applet.visitedPage;
+                case Value.Page != null: return Value._Page;
+                case Value.Widget != null: return Value._Widget.Page;
             }
     }
     window.alert('could not find any visual for this DOM element');
@@ -10403,7 +10411,7 @@ export function WidgetFor(Value) {
             }
         case (Value instanceof Element):
             if (Value.Widget != null) {
-                return Value.Widget;
+                return Value._Widget;
             }
     }
     window.alert('could not find any widget for this DOM element');
@@ -10473,7 +10481,7 @@ async function startWAC() {
             console.error(`could not deserialize applet ${quoted(AppletName)}`, Signal);
         }
     }
-    if (Applet == null) {
+    if (Applet == null) { // in case of an error, create an empty applet
         Applet = WAC_Applet.deserializedFrom('{"PageList":[{ "WidgetList":[] }]}');
     }
     ;
