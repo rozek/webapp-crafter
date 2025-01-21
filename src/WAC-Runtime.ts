@@ -5023,6 +5023,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
           case ValueIsWidget(Descriptor.SourceWidget):
             SourceWidget     = Descriptor.SourceWidget as WAC_Widget
             SourceWidgetPath = SourceWidget.Path
+            break
           default:
             throwError(
               'InvalidArgument: the given source widget is neither a widget ' +
@@ -6971,6 +6972,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
           case ValueIsWidget(Descriptor.SourceWidget):
             SourceWidget     = Descriptor.SourceWidget as WAC_Widget
             SourceWidgetPath = SourceWidget.Path
+            break
           default:
             throwError(
               'InvalidArgument: the given source widget is neither a widget ' +
@@ -8110,8 +8112,12 @@ console.warn('file drop error',Signal)
         EditorType:'textline-input', AccessorsFor:'memoized', withCallback:true, },
     ]
 
+    function _onClick (Event:any) { my.on('click')(Event) }
+
     onRender(function (this:Indexable) {
-      return html`<div class="WAC Content LabelView">${my.Value}</>`
+      return html`<div class="WAC Content LabelView"
+        onClick=${_onClick}
+      >${my.Value}</>`
     })
   }
 
@@ -11556,7 +11562,7 @@ console.log('rendering...')
             WidgetsToShow.forEach((Widget:Indexable) => Widget._Pane = Overlay)
           this._shownWidgets = WidgetsToShow
         }
-      const PaneGeometry = { x,y, Width:Width-2,Height:Height-2 }
+      const PaneGeometry = { x,y, Width,Height } // some browsers need Width+2,Height+2
         if (hasTitlebar) { PaneGeometry.Height -= 30 }
         if (isResizable) { PaneGeometry.Height -= 10 }
         PaneGeometry.Height = Math.max(0,PaneGeometry.Height)
@@ -11782,7 +11788,11 @@ console.log('rendering...')
           this._shownWidgets = WidgetsToShow
         }
       const PaneGeometry = { x,y, Width,Height }
-      const BaseGeometry = SourceWidget.Geometry
+      const BaseGeometry = (
+        SourceWidget == null
+        ? { x:0,y:0, Width:0,Height:0 }                          // just a dummy
+        : SourceWidget.Geometry
+      )
 
       let ContentPane:any[] = (this._shownWidgets as any).toReversed().map(
         (Widget:WAC_Widget) => {
