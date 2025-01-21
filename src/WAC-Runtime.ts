@@ -3713,7 +3713,7 @@ console.warn('finished tracking asynchronous callback ' + quoted(CallbackName))
   /**** AssetURL ****/
 
     public AssetURL (relativeURL:WAC_URL):WAC_URL {
-      expectURL('asset URL',relativeURL)
+      expectURL('asset URL',relativeURL + '/.') // because AssetURL is incomplete
 
       switch (true) {
         case URLhasSchema(relativeURL):
