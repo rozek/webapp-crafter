@@ -24,15 +24,6 @@ import { customAlphabet } from 'nanoid';
 // @ts-ignore TS2307 typescript has problems importing "nanoid-dictionary"
 import { nolookalikesSafe } from 'nanoid-dictionary';
 import { throwError, throwReadOnlyError, fromDocumentTo, WAC_FontWeights, WAC_FontStyles, WAC_TextDecorationLines, WAC_TextDecorationStyles, WAC_TextAlignments, WAC_BackgroundModes, WAC_BorderStyles, WAC_Cursors, WAC_Overflows, ValueIsBehavior, ValueIsApplet, ValueIsPage, ValueIsWidget, ValueIsErrorReport, allowPage, BehaviorIsIntrinsic, GestureRecognizer, useDesigner, rerender as WAC_rerender, } from "./WAC-Runtime.esm.js";
-import mapTouchToMouseFor from 'svelte-touch-to-mouse';
-mapTouchToMouseFor('.WAD.DesignerButton');
-mapTouchToMouseFor('.WAD.Dialog > .Titlebar');
-mapTouchToMouseFor('.WAD.Dialog > .leftResizer');
-mapTouchToMouseFor('.WAD.Dialog > .middleResizer');
-mapTouchToMouseFor('.WAD.Dialog > .rightResizer');
-mapTouchToMouseFor('.WAD.LayouterLayer');
-mapTouchToMouseFor('.WAD.Cover');
-mapTouchToMouseFor('.WAD.ShapeHandle');
 /**** constants for special input situations ****/
 const noSelection = {};
 const multipleValues = {};
