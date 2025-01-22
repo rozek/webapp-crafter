@@ -52,12 +52,6 @@
 // @ts-ignore TS2307 typescript has problems importing "nanoid-dictionary"
   import { nolookalikesSafe } from 'nanoid-dictionary'
 
-  import mapTouchToMouseFor from 'svelte-touch-to-mouse'
-    mapTouchToMouseFor('.WAC.Dialog > .Titlebar')
-    mapTouchToMouseFor('.WAC.Dialog > .leftResizer')
-    mapTouchToMouseFor('.WAC.Dialog > .middleResizer')
-    mapTouchToMouseFor('.WAC.Dialog > .rightResizer')
-
   import Conversion from 'svelte-coordinate-conversion'
   const  { fromLocalTo, fromViewportTo, fromDocumentTo } = Conversion
   export { fromLocalTo, fromViewportTo, fromDocumentTo }
@@ -12318,6 +12312,58 @@ console.log('rendering...')
       },0)
     }
   }
+
+
+  function mapTouchToMouse ():void {
+    function TouchEventMapper (originalEvent:TouchEvent):void {
+      let Target = originalEvent.target as Element
+
+      let simulatedEventType
+      switch (originalEvent.type) {
+        case 'touchstart':  simulatedEventType = 'mousedown'; break
+        case 'touchmove':   simulatedEventType = 'mousemove'; break
+        case 'touchend':    simulatedEventType = 'mouseup';   break
+        case 'touchcancel': simulatedEventType = 'mouseup';   break
+        default:            return
+      }
+
+      let firstTouch = originalEvent.changedTouches[0]
+
+      let clientX = firstTouch.clientX, pageX = firstTouch.pageX, PageXOffset = window.pageXOffset
+      let clientY = firstTouch.clientY, pageY = firstTouch.pageY, PageYOffset = window.pageYOffset
+      if (
+        (pageX === 0) && (Math.floor(clientX) > Math.floor(pageX)) ||
+        (pageY === 0) && (Math.floor(clientY) > Math.floor(pageY))
+      ) {
+        clientX -= PageXOffset
+        clientY -= PageYOffset
+      } else if (
+        (clientX < pageX - PageXOffset) || (clientY < pageY - PageYOffset)
+      ) {
+        clientX = pageX - PageXOffset
+        clientY = pageY - PageYOffset
+      }
+
+      let simulatedEvent = new MouseEvent(simulatedEventType, {
+        bubbles:true, cancelable:true,
+        screenX:firstTouch.screenX, screenY:firstTouch.screenY,
+// @ts-ignore we definitely want "pageX" and "pageY"
+        clientX, clientY, pageX, pageY, buttons:1, button:0,
+        ctrlKey:originalEvent.ctrlKey, shiftKey:originalEvent.shiftKey,
+        altKey:originalEvent.altKey, metaKey:originalEvent.metaKey
+      })
+
+      firstTouch.target.dispatchEvent(simulatedEvent)
+//    originalEvent.preventDefault()
+    }
+
+    document.addEventListener('touchstart',  TouchEventMapper, true)
+    document.addEventListener('touchmove',   TouchEventMapper, true)
+    document.addEventListener('touchend',    TouchEventMapper, true)
+    document.addEventListener('touchcancel', TouchEventMapper, true)
+  }
+
+  mapTouchToMouse()
 
 /**** useDesigner ****/
 
