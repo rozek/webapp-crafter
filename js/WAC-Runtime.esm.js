@@ -4507,6 +4507,15 @@ export class WAC_Applet extends WAC_Visual {
             console.error('could not preserve applet, reason', Signal);
         }
     }
+    /**** removeLocalBackup ****/
+    async removeLocalBackup() {
+        try {
+            await AppletStore.removeItem(this.Name);
+        }
+        catch (Signal) {
+            console.error('could not remove applet, reason', Signal);
+        }
+    }
     /**** replaceWith ****/
     replaceWith(Serialization) {
         const AppletView = this._View;
