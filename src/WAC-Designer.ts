@@ -4924,7 +4924,29 @@ console.error(Signal)
         window.alert('Print Error\n\n' + Signal)
       }
     })
-  }/**** selectedPagesMayBeShiftedUp ****/
+  }/**** doRemoveLocalBackup ****/
+
+  async function doRemoveLocalBackup ():Promise<void> {
+    const { Applet } = DesignerState
+
+    if (OperationWasConfirmed(
+        'Applet Backup Removal\n\n' +
+        'You are about to remove the local backup of this applet'
+      )
+    ) {
+      await Applet.removeLocalBackup()
+
+      setTimeout(() => {
+        window.alert(
+          'Applet Backup was removed\n\n' +
+          'Reload this page to make the removal permanent or apply any ' +
+          'change to create a new backup'
+        )
+      },100)
+    }
+  }
+
+/**** selectedPagesMayBeShiftedUp ****/
 
   function selectedPagesMayBeShiftedUp ():boolean {
     const selectedPages = sortedPageSelection()
@@ -6136,20 +6158,6 @@ console.log('DesignerState',DesignerState)
               onInput=${(Event:Indexable) => doConfigureApplet('GridHeight',parseFloat(Event.target.value))}
             />
           </>
-        </>        <${WAD_Fold} Label="Head Extensions"
-          Expansion=${Expansions.HeadExtensions}
-          toggleExpansion=${() => toggleExpansion('HeadExtensions')}
-        >
-          <${WAD_horizontally}>
-            <${WAD_Label}>${'<'}head${'>'} Exensions</>
-          </>
-
-          <${WAD_TextInput} Placeholder="(enter <head> extensions)" style="
-            flex:1 0 auto; padding-top:4px; min-height:60px;
-            white-space:pre;
-          " Value=${Applet.HeadExtensions}
-            onInput=${(Event:Indexable) => doConfigureApplet('HeadExtensions',Event.target.value)}
-          />
         </>        <${WAD_Fold} Label="Behavior-specific Settings"
           Expansion=${Expansions.BehaviorSpecific}
           toggleExpansion=${() => toggleExpansion('BehaviorSpecific')}
@@ -6192,6 +6200,24 @@ console.log('DesignerState',DesignerState)
           " Value=${pendingScript == null ? activeScript : pendingScript}
             onInput=${(Event:Indexable) => setPendingScriptTo(Event.target.value)}
           />
+        </>        <${WAD_Fold} Label="Developer Functions"
+          Expansion=${Expansions.Developer}
+          toggleExpansion=${() => toggleExpansion('Developer')}
+        >
+          <${WAD_horizontally}>
+            <${WAD_Label}>${'<'}head${'>'} Exensions</>
+          </>
+
+          <${WAD_TextInput} Placeholder="(enter <head> extensions)" style="
+            flex:1 0 auto; padding-top:4px; min-height:60px;
+            white-space:pre;
+          " Value=${Applet.HeadExtensions}
+            onInput=${(Event:Indexable) => doConfigureApplet('HeadExtensions',Event.target.value)}
+          />
+
+          <${WAD_horizontally}>
+            <${WAD_Button} onClick=${doRemoveLocalBackup}>Remove Local Backup</>
+          </>
         </>
       </>
 
