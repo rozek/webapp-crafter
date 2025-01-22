@@ -5324,6 +5324,16 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
       }
     }
 
+  /**** removeLocalBackup ****/
+
+    public async removeLocalBackup ():Promise<void> {
+      try {
+        await AppletStore.removeItem(this.Name)
+      } catch (Signal:any) {
+        console.error('could not remove applet, reason',Signal)
+      }
+    }
+
   /**** replaceWith ****/
 
     public replaceWith (Serialization:Serializable):void {
