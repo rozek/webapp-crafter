@@ -1312,6 +1312,13 @@
     -webkit-touch-callout:none;
   }
 
+  .WAC img {
+    -webkit-user-drag:none; -khtml-user-drag:none;
+    -moz-user-drag:none; -o-user-drag:none;
+    user-drag: none;
+    user-select: none;
+  }
+
   .disabled, [disabled] { opacity:0.3 }
   .readonly             { background:none }
   .no-pointer-events    { pointer-events:none }
@@ -3691,7 +3698,9 @@ console.warn('finished tracking asynchronous callback ' + quoted(CallbackName))
   /**** AssetURL ****/
 
     public AssetURL (relativeURL:WAC_URL):WAC_URL {
-      expectURL('asset URL',relativeURL + '/.') // because AssetURL is incomplete
+      expectURL(
+        'asset URL',(relativeURL == null ? undefined : relativeURL + '/.')
+      ) // because AssetURL is incomplete
 
       switch (true) {
         case URLhasSchema(relativeURL):
