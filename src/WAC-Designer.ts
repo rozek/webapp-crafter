@@ -57,16 +57,6 @@
     useDesigner, rerender as WAC_rerender, setScriptError,
   } from "./WAC-Runtime.esm.js"
 
-  import mapTouchToMouseFor from 'svelte-touch-to-mouse'
-    mapTouchToMouseFor('.WAD.DesignerButton')
-    mapTouchToMouseFor('.WAD.Dialog > .Titlebar')
-    mapTouchToMouseFor('.WAD.Dialog > .leftResizer')
-    mapTouchToMouseFor('.WAD.Dialog > .middleResizer')
-    mapTouchToMouseFor('.WAD.Dialog > .rightResizer')
-    mapTouchToMouseFor('.WAD.LayouterLayer')
-    mapTouchToMouseFor('.WAD.Cover')
-    mapTouchToMouseFor('.WAD.ShapeHandle')
-
 /**** make some existing types indexable ****/
 
   interface Indexable { [Key:string]:any }
