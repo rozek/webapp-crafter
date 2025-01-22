@@ -815,6 +815,11 @@ if (WACStyleElement == null) {
 
 /**** common Settings ****/
 
+  div.WAC {
+    touch-action:none; user-select:none;
+    -webkit-touch-callout:none;
+  }
+
   .disabled, [disabled] { opacity:0.3 }
   .readonly             { background:none }
   .no-pointer-events    { pointer-events:none }
@@ -10348,9 +10353,8 @@ export function rerender() {
         }, 0);
     }
 }
-function mapTouchToMouse() {
+function mapTouchToMouseIn(Target) {
     function TouchEventMapper(originalEvent) {
-        let Target = originalEvent.target;
         let simulatedEventType;
         switch (originalEvent.type) {
             case 'touchstart':
@@ -10390,12 +10394,16 @@ function mapTouchToMouse() {
         firstTouch.target.dispatchEvent(simulatedEvent);
         //    originalEvent.preventDefault()
     }
-    document.addEventListener('touchstart', TouchEventMapper, true);
-    document.addEventListener('touchmove', TouchEventMapper, true);
-    document.addEventListener('touchend', TouchEventMapper, true);
-    document.addEventListener('touchcancel', TouchEventMapper, true);
+    // @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchstart', TouchEventMapper, true);
+    // @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchmove', TouchEventMapper, true);
+    // @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchend', TouchEventMapper, true);
+    // @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchcancel', TouchEventMapper, true);
 }
-mapTouchToMouse();
+//mapTouchToMouseIn(document)
 /**** useDesigner ****/
 let DesignerLayer = undefined;
 export function useDesigner(newDesigner) {
