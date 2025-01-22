@@ -1307,6 +1307,11 @@
 
 /**** common Settings ****/
 
+  div.WAC {
+    touch-action:none; user-select:none;
+    -webkit-touch-callout:none;
+  }
+
   .disabled, [disabled] { opacity:0.3 }
   .readonly             { background:none }
   .no-pointer-events    { pointer-events:none }
@@ -12314,10 +12319,8 @@ console.log('rendering...')
   }
 
 
-  function mapTouchToMouse ():void {
+  function mapTouchToMouseIn (Target:Document|HTMLElement):void {
     function TouchEventMapper (originalEvent:TouchEvent):void {
-      let Target = originalEvent.target as Element
-
       let simulatedEventType
       switch (originalEvent.type) {
         case 'touchstart':  simulatedEventType = 'mousedown'; break
@@ -12357,13 +12360,17 @@ console.log('rendering...')
 //    originalEvent.preventDefault()
     }
 
-    document.addEventListener('touchstart',  TouchEventMapper, true)
-    document.addEventListener('touchmove',   TouchEventMapper, true)
-    document.addEventListener('touchend',    TouchEventMapper, true)
-    document.addEventListener('touchcancel', TouchEventMapper, true)
+// @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchstart',  TouchEventMapper, true)
+// @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchmove',   TouchEventMapper, true)
+// @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchend',    TouchEventMapper, true)
+// @ts-ignore TS2345 allow "TouchEventMapper" as callback
+    Target.addEventListener('touchcancel', TouchEventMapper, true)
   }
 
-  mapTouchToMouse()
+  //mapTouchToMouseIn(document)
 
 /**** useDesigner ****/
 
