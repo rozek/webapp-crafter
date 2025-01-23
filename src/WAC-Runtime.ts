@@ -7764,7 +7764,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
 /**** for MarkdownView ****/
 
   import { Marked }          from 'marked'
-//  import   markedKatex       from 'marked-katex-extension'
+  import   markedKatex       from 'marked-katex-extension'
   import { markedHighlight } from 'marked-highlight'
     import hljs from 'highlight.js/lib/core'
 
@@ -8202,11 +8202,11 @@ console.warn('file drop error',Signal)
       my._Marked.setOptions({
         gfm:true, breaks:true, pedantic:false, smartypants:false
       })
-/*
+
       my._Marked.use(markedKatex({
-        throwOnError:false, nonStandard:true,
+        throwOnError:false, /*nonStandard:true,*/
       }))
-*/
+
       my._Marked.use(markedHighlight({
         emptyLangClass:'hljs',
         langPrefix:    'hljs language-',                     // CSS class prefix
@@ -12455,6 +12455,28 @@ console.log('rendering...')
 
   //mapTouchToMouseIn(document)
 
+//----------------------------------------------------------------------------//
+//                           Confirmation Handling                            //
+//----------------------------------------------------------------------------//
+
+  export function OperationWasConfirmed (Message?:string):boolean {
+    let ConfirmationCode = Math.round(Math.random()*10000).toString()
+      ConfirmationCode += '0000'.slice(ConfirmationCode.length)
+
+    Message = (Message || 'This operation can not be undone.') + '\n\n' +
+      'Please, enter the following number if you want to proceed:\n\n' +
+      '   ' + ConfirmationCode + '\n\n' +
+      'Otherwise, the operation will be cancelled'
+
+    let UserInput = window.prompt(Message,'')
+    if (UserInput === ConfirmationCode) {
+      return true
+    } else {
+      window.alert('Operation will be cancelled')
+      return false
+    }
+  }
+
 /**** useDesigner ****/
 
   let DesignerLayer:Function|undefined = undefined
@@ -12710,6 +12732,7 @@ console.log('rendering...')
     Mover:WAC_Mover, Resizer:WAC_Resizer, Shaper:WAC_Shaper, Dragger:WAC_Dragger,
     Component, createRef, useRef, useEffect, useCallback,
     fromLocalTo, fromViewportTo, fromDocumentTo,
+    OperationWasConfirmed,
   })
 
   global.AppletFor = AppletFor
