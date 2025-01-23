@@ -13,7 +13,7 @@
     ObjectMergedWith as Object_assign,
 //  throwError,
     quoted, escaped,
-    ValuesAreEqual, ValuesDiffer,
+    ValuesAreEqual as _ValuesAreEqual, ValuesDiffer as _ValuesDiffer,
     ValueIsBoolean,
     ValueIsNumber, ValueIsFiniteNumber, ValueIsNumberInRange,
       ValueIsInteger, ValueIsIntegerInRange, ValueIsOrdinal, ValueIsCardinal,
@@ -37,6 +37,18 @@
     HexColor,
   } from 'javascript-interface-library'
   import * as JIL from 'javascript-interface-library'
+
+  function ValuesAreEqual (a:any,b:any,Mode?:any):boolean {
+    try { return _ValuesAreEqual(a,b,Mode) } catch (Signal:any) {
+      console.error('ValuesAreEqual failed comparing',a,'with',b,'reason:',Signal)
+    }; return false
+  }
+
+  function ValuesDiffer (a:any,b:any,Mode?:any):boolean {
+    try { return _ValuesDiffer(a,b,Mode) } catch (Signal:any) {
+      console.error('ValuesDiffer failed comparing',a,'with',b,'reason:',Signal)
+    }; return false
+  }
 
   const ValueIsPhoneNumber = ValueIsTextline // *C* should be implemented
 
