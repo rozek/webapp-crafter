@@ -2487,6 +2487,7 @@ function generateStandaloneWebApp(withDesigner = false) {
     html, body { width:100%; height:100%; width:100vw; height:100vh; margin:0px; padding:0px }
     html       { overflow:hidden scroll }
   </style>
+  <link rel="stylesheet" href="https://rozek.github.io/marked-katex-extension/dist/katex.min.css">
 
   ${'<'}script type="importmap">
   {
@@ -2503,7 +2504,7 @@ function generateStandaloneWebApp(withDesigner = false) {
       "wac-designer":"https://rozek.github.io/webapp-crafter/js/wat-designer.esm.js",
 
       "marked":                "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js",
-      "marked-katex-extension":"https://cdn.jsdelivr.net/npm/marked-katex-extension/+esm",
+      "marked-katex-extension":"https://rozek.github.io/marked-katex-extension/dist/marked-katex-extension.esm.js",
       "marked-highlight":      "https://cdn.jsdelivr.net/npm/marked-highlight/+esm",
       "highlight.js/lib/core":                "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/highlight.min.js",
       "highlight.js/lib/languages/css":       "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/css.min.js",
@@ -2511,9 +2512,7 @@ function generateStandaloneWebApp(withDesigner = false) {
       "highlight.js/lib/languages/java":      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/java.min.js",
       "highlight.js/lib/languages/json":      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/json.min.js",
       "highlight.js/lib/languages/typescript":"https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/typescript.min.js",
-      "highlight.js/lib/languages/xml":       "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/xml.min.js",
-
-      "katex": "https://cdn.jsdelivr.net/npm/katex/+esm"
+      "highlight.js/lib/languages/xml":       "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/xml.min.js"
     }
   }
   ${'<'}/script>
