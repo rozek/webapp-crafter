@@ -10,7 +10,7 @@
   import {
 //  throwError,
     quoted, HTMLsafe,
-    ValuesAreEqual,
+    ValuesAreEqual as _ValuesAreEqual,
     ValueIsOrdinal,
     ValueIsText,
     ValueIsPlainObject,
@@ -22,6 +22,12 @@
     allowFunction,
     allowOneOf,
   } from 'javascript-interface-library'
+
+  function ValuesAreEqual (a:any,b:any,Mode?:any):boolean {
+    try { return _ValuesAreEqual(a,b,Mode) } catch (Signal:any) {
+      console.error('ValuesAreEqual failed comparing',a,'with',b,'reason:',Signal)
+    }; return false
+  }
 
   import Conversion from 'svelte-coordinate-conversion'
   const { fromViewportTo } = Conversion
@@ -55,6 +61,7 @@
     BehaviorIsIntrinsic,
     GestureRecognizer,
     useDesigner, rerender as WAC_rerender, setScriptError,
+    OperationWasConfirmed,
   } from "./WAC-Runtime.esm.js"
 
 /**** make some existing types indexable ****/
@@ -854,28 +861,6 @@
       case noSelection:
       case multipleValues: return commonValue
       default:             return (commonValue as any[]).join('\n')
-    }
-  }
-
-//----------------------------------------------------------------------------//
-//                           Confirmation Handling                            //
-//----------------------------------------------------------------------------//
-
-  function OperationWasConfirmed (Message?:string):boolean {
-    let ConfirmationCode = Math.round(Math.random()*10000).toString()
-      ConfirmationCode += '0000'.slice(ConfirmationCode.length)
-
-    Message = (Message || 'This operation can not be undone.') + '\n\n' +
-      'Please, enter the following number if you want to proceed:\n\n' +
-      '   ' + ConfirmationCode + '\n\n' +
-      'Otherwise, the operation will be cancelled'
-
-    let UserInput = window.prompt(Message,'')
-    if (UserInput === ConfirmationCode) {
-      return true
-    } else {
-      window.alert('Operation will be cancelled')
-      return false
     }
   }
 
@@ -3565,7 +3550,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     public canExtend (otherOperation:WAD_Operation):boolean {
       return (
         (otherOperation instanceof WAD_PageConfigurationOperation) &&
-        ValuesAreEqual(otherOperation._Pages,this._Pages) &&
+        ValuesAreEqual(otherOperation._Pages,this._Pages,'by-reference') &&
         (otherOperation._PropertyName === this._PropertyName) &&
         this._oldValues.every((oldValue:any) => ValuesAreEqual(oldValue,otherOperation._newValue))
       )
@@ -3698,7 +3683,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     public canExtend (otherOperation:WAD_Operation):boolean {
       return (
         (otherOperation instanceof WAD_PageShiftOperation) &&
-        ValuesAreEqual(otherOperation._Pages,this._Pages) &&
+        ValuesAreEqual(otherOperation._Pages,this._Pages,'by-reference') &&
         ValuesAreEqual(otherOperation._newIndices,this._oldIndices)
       )
     }
@@ -3904,7 +3889,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     public canExtend (otherOperation:WAD_Operation):boolean {
       return (
         (otherOperation instanceof WAD_WidgetConfigurationOperation) &&
-        ValuesAreEqual(otherOperation._Widgets,this._Widgets) &&
+        ValuesAreEqual(otherOperation._Widgets,this._Widgets,'by-reference') &&
         (otherOperation._PropertyName === this._PropertyName) &&
         ValuesAreEqual(this._oldValues,otherOperation._newValues)
       )
@@ -4044,7 +4029,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     public canExtend (otherOperation:WAD_Operation):boolean {
       return (
         (otherOperation instanceof WAD_WidgetShapeOperation) &&
-        ValuesAreEqual(otherOperation._Widgets,this._Widgets) &&
+        ValuesAreEqual(otherOperation._Widgets,this._Widgets,'by-reference') &&
         this._oldGeometries.every(
           (Geometry:WAC_Geometry, i:number) => ValuesAreEqual(otherOperation._newGeometries[i],Geometry)
         )
@@ -4121,7 +4106,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     public canExtend (otherOperation:WAD_Operation):boolean {
       return (
         (otherOperation instanceof WAD_WidgetShiftOperation) &&
-        ValuesAreEqual(otherOperation._Widgets,this._Widgets) &&
+        ValuesAreEqual(otherOperation._Widgets,this._Widgets,'by-reference') &&
         ValuesAreEqual(otherOperation._newIndices,this._oldIndices)
       )
     }
