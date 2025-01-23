@@ -16,14 +16,24 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 import { 
 //  throwError,
-quoted, HTMLsafe, ValuesAreEqual, ValueIsOrdinal, ValueIsText, ValueIsPlainObject, ValueIsArray, ValueIsList, ValueIsListSatisfying, allowOrdinal, allowTextline, expectList, allowListSatisfying, allowFunction, allowOneOf, } from 'javascript-interface-library';
+quoted, HTMLsafe, ValuesAreEqual as _ValuesAreEqual, ValueIsOrdinal, ValueIsText, ValueIsPlainObject, ValueIsArray, ValueIsList, ValueIsListSatisfying, allowOrdinal, allowTextline, expectList, allowListSatisfying, allowFunction, allowOneOf, } from 'javascript-interface-library';
+function ValuesAreEqual(a, b, Mode) {
+    try {
+        return _ValuesAreEqual(a, b, Mode);
+    }
+    catch (Signal) {
+        console.error('ValuesAreEqual failed comparing', a, 'with', b, 'reason:', Signal);
+    }
+    ;
+    return false;
+}
 import Conversion from 'svelte-coordinate-conversion';
 const { fromViewportTo } = Conversion;
 import { html, useState, useRef, useEffect, useMemo, useCallback, } from 'htm/preact';
 import { customAlphabet } from 'nanoid';
 // @ts-ignore TS2307 typescript has problems importing "nanoid-dictionary"
 import { nolookalikesSafe } from 'nanoid-dictionary';
-import { throwError, throwReadOnlyError, fromDocumentTo, WAC_FontWeights, WAC_FontStyles, WAC_TextDecorationLines, WAC_TextDecorationStyles, WAC_TextAlignments, WAC_BackgroundModes, WAC_BorderStyles, WAC_Cursors, WAC_Overflows, ValueIsBehavior, ValueIsApplet, ValueIsPage, ValueIsWidget, ValueIsErrorReport, allowPage, BehaviorIsIntrinsic, GestureRecognizer, useDesigner, rerender as WAC_rerender, } from "./WAC-Runtime.esm.js";
+import { throwError, throwReadOnlyError, fromDocumentTo, WAC_FontWeights, WAC_FontStyles, WAC_TextDecorationLines, WAC_TextDecorationStyles, WAC_TextAlignments, WAC_BackgroundModes, WAC_BorderStyles, WAC_Cursors, WAC_Overflows, ValueIsBehavior, ValueIsApplet, ValueIsPage, ValueIsWidget, ValueIsErrorReport, allowPage, BehaviorIsIntrinsic, GestureRecognizer, useDesigner, rerender as WAC_rerender, OperationWasConfirmed, } from "./WAC-Runtime.esm.js";
 /**** constants for special input situations ****/
 const noSelection = {};
 const multipleValues = {};
@@ -774,25 +784,6 @@ function commonListLiteralOf(ValueList) {
         case noSelection:
         case multipleValues: return commonValue;
         default: return commonValue.join('\n');
-    }
-}
-//----------------------------------------------------------------------------//
-//                           Confirmation Handling                            //
-//----------------------------------------------------------------------------//
-function OperationWasConfirmed(Message) {
-    let ConfirmationCode = Math.round(Math.random() * 10000).toString();
-    ConfirmationCode += '0000'.slice(ConfirmationCode.length);
-    Message = (Message || 'This operation can not be undone.') + '\n\n' +
-        'Please, enter the following number if you want to proceed:\n\n' +
-        '   ' + ConfirmationCode + '\n\n' +
-        'Otherwise, the operation will be cancelled';
-    let UserInput = window.prompt(Message, '');
-    if (UserInput === ConfirmationCode) {
-        return true;
-    }
-    else {
-        window.alert('Operation will be cancelled');
-        return false;
     }
 }
 //------------------------------------------------------------------------------
@@ -3235,7 +3226,7 @@ class WAD_PageConfigurationOperation extends WAD_Operation {
     /**** canExtend ****/
     canExtend(otherOperation) {
         return ((otherOperation instanceof WAD_PageConfigurationOperation) &&
-            ValuesAreEqual(otherOperation._Pages, this._Pages) &&
+            ValuesAreEqual(otherOperation._Pages, this._Pages, 'by-reference') &&
             (otherOperation._PropertyName === this._PropertyName) &&
             this._oldValues.every((oldValue) => ValuesAreEqual(oldValue, otherOperation._newValue)));
     }
@@ -3363,7 +3354,7 @@ class WAD_PageShiftOperation extends WAD_Operation {
     /**** canExtend ****/
     canExtend(otherOperation) {
         return ((otherOperation instanceof WAD_PageShiftOperation) &&
-            ValuesAreEqual(otherOperation._Pages, this._Pages) &&
+            ValuesAreEqual(otherOperation._Pages, this._Pages, 'by-reference') &&
             ValuesAreEqual(otherOperation._newIndices, this._oldIndices));
     }
     /**** isIrrelevant ****/
@@ -3561,7 +3552,7 @@ class WAD_WidgetConfigurationOperation extends WAD_Operation {
     /**** canExtend ****/
     canExtend(otherOperation) {
         return ((otherOperation instanceof WAD_WidgetConfigurationOperation) &&
-            ValuesAreEqual(otherOperation._Widgets, this._Widgets) &&
+            ValuesAreEqual(otherOperation._Widgets, this._Widgets, 'by-reference') &&
             (otherOperation._PropertyName === this._PropertyName) &&
             ValuesAreEqual(this._oldValues, otherOperation._newValues));
     }
@@ -3698,7 +3689,7 @@ class WAD_WidgetShapeOperation extends WAD_Operation {
     /**** canExtend ****/
     canExtend(otherOperation) {
         return ((otherOperation instanceof WAD_WidgetShapeOperation) &&
-            ValuesAreEqual(otherOperation._Widgets, this._Widgets) &&
+            ValuesAreEqual(otherOperation._Widgets, this._Widgets, 'by-reference') &&
             this._oldGeometries.every((Geometry, i) => ValuesAreEqual(otherOperation._newGeometries[i], Geometry)));
     }
     /**** isIrrelevant ****/
@@ -3771,7 +3762,7 @@ class WAD_WidgetShiftOperation extends WAD_Operation {
     /**** canExtend ****/
     canExtend(otherOperation) {
         return ((otherOperation instanceof WAD_WidgetShiftOperation) &&
-            ValuesAreEqual(otherOperation._Widgets, this._Widgets) &&
+            ValuesAreEqual(otherOperation._Widgets, this._Widgets, 'by-reference') &&
             ValuesAreEqual(otherOperation._newIndices, this._oldIndices));
     }
     /**** isIrrelevant ****/
