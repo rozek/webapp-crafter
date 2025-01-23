@@ -1089,6 +1089,12 @@
   .WAC.MarkdownView.Content li { margin-left:20px }
   .WAC.MarkdownView.Content ul, .WAC.MarkdownView.Content ol { padding-left:0px }
 
+  .WAC.MarkdownView.Content blockquote {
+    margin:7px 0px 0px 10px;
+    padding:0px 0px 0px 6px;
+    border:none; border-left:solid 4px lightgray;
+  }
+
   .WAC.MarkdownView.Content code {
     font-family:Menlo,Courier,monospace;
     font-size:13px; font-weight:normal; line-height:1.5; margin:0px;
@@ -1099,6 +1105,40 @@
   .WAC.MarkdownView.Content pre:not(:first-child) { margin-top:7px }
   .WAC.MarkdownView.Content pre > code { padding:0px }
 
+/**** Syntax Highlighing ****/
+
+  .hljs {
+    display:block;
+    overflow-x:auto;
+    padding:0.5em;
+    background:#f0f0f0;
+    color:#444444;
+  }
+
+  .hljs-comment, .hljs-quote                     { font-style:italic;  color:#999988 }
+  .hljs-keyword, .hljs-selector-tag, .hljs-subst { font-weight:bold;   color:#333333 }
+  .hljs-string,  .hljs-doctag                    { color:#dd1144 }
+  .hljs-number                                   { color:#009999 }
+  .hljs-title, .hljs-section, .hljs-selector-id  { font-weight:bold;   color:#990000 }
+  .hljs-class .hljs-title, .hljs-type            { font-weight:bold;   color:#445588 }
+  .hljs-variable, .hljs-template-variable        { color:#336699 }
+  .hljs-attr                                     { color:#007700 }
+  .hljs-tag, .hljs-name                          { font-weight:normal; color:#000080}
+  .hljs-regexp                                   { color:#009926 }
+  .hljs-symbol, .hljs-bullet, .hljs-link, .hljs-meta, .hljs-selector-pseudo { color:#990073 }
+  .hljs-built_in, .hljs-builtin-name             { color:#0086b3 }
+  .hljs-deletion                                 { background:#ffdddd }
+  .hljs-addition                                 { background:#ddffdd }
+  .hljs-emphasis                                 { font-style:italic }
+  .hljs-strong                                   { font-weight:bold }
+  .hljs.language-html, .hljs.language-xml        { color:#333333 }
+  .hljs.language-css .hljs-selector-class,
+  .hljs.language-css .hljs-selector-tag,
+  .hljs.language-css .hljs-attribute             { color:#1e347b }
+  .hljs.language-javascript .hljs-keyword        { color:#0000aa }
+  .hljs.language-typescript .hljs-keyword        { color:#0000aa }
+  .hljs.language-java .hljs-keyword              { color:#bb9966 }
+  .hljs.language-json .hljs-attribute            { color:#0000aa }
 /**** WAC ModalLayer ****/
 
   .WAC.ModalLayer {
@@ -7712,12 +7752,12 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
 /**** for MarkdownView ****/
 
   import { Marked }          from 'marked'
-//import   markedKatex       from 'marked-katex-extension'
+//  import   markedKatex       from 'marked-katex-extension'
   import { markedHighlight } from 'marked-highlight'
     import hljs from 'highlight.js/lib/core'
 
     import { default as _css }        from 'highlight.js/lib/languages/css'
-      hljs.registerLanguage('html',_css)
+      hljs.registerLanguage('css',_css)
     import { default as _javascript } from 'highlight.js/lib/languages/javascript'
       hljs.registerLanguage('javascript',_javascript)
     import { default as _java }       from 'highlight.js/lib/languages/java'
@@ -8148,9 +8188,21 @@ console.warn('file drop error',Signal)
   ) => {
     my._Marked = new Marked()
       my._Marked.setOptions({
-        gfm:true, breaks:true,
+        gfm:true, breaks:true, pedantic:false, smartypants:false
       })
-//    my._Marked.use(markedKatex({ nonStandard:true }))
+/*
+      my._Marked.use(markedKatex({
+        throwOnError:false, nonStandard:true,
+      }))
+*/
+      my._Marked.use(markedHighlight({
+        emptyLangClass:'hljs',
+        langPrefix:    'hljs language-',                     // CSS class prefix
+        highlight(Code, Language, Info) {
+          Language = hljs.getLanguage(Language) ? Language : 'plaintext'
+          return hljs.highlight(Code, { language:Language }).value
+        }
+      }))
 //  my._HTMLContent = my._Marked.parse(my.Value)           // will be done later
 
   /**** custom Properties ****/
