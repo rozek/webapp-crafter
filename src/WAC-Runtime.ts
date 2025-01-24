@@ -2832,6 +2832,23 @@ console.log('setErrorReport',Visual,ErrorReport)
       }
     }
 
+  /**** configurableProperty ****/
+
+    public configurableProperty (Name:WAC_Identifier):WAC_PropertyDescriptor|undefined {
+      expectIdentifier('property identifier',Name)
+
+      const DescriptorIndex = this._configurableProperties.findIndex(
+        (Descriptor:WAC_PropertyDescriptor) => Descriptor.Name === Name
+      )
+      if (DescriptorIndex < 0) { return undefined }
+
+      const Descriptor = {...this._configurableProperties[DescriptorIndex]}
+        if (Descriptor.Hashmarks   != null) { Descriptor.Hashmarks   = Descriptor.Hashmarks.slice() }
+        if (Descriptor.Suggestions != null) { Descriptor.Suggestions = Descriptor.Suggestions.slice() }
+        if (Descriptor.ValueList   != null) { Descriptor.ValueList   = Descriptor.ValueList.slice() }
+      return Descriptor
+    }
+
   /**** configure ****/
 
     public configure (OptionSet:Indexable):void {
