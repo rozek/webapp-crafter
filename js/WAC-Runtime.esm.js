@@ -2516,6 +2516,25 @@ export class WAC_Visual {
             this.rerender();
         }
     }
+    /**** configurableProperty ****/
+    configurableProperty(Name) {
+        expectIdentifier('property identifier', Name);
+        const DescriptorIndex = this._configurableProperties.findIndex((Descriptor) => Descriptor.Name === Name);
+        if (DescriptorIndex < 0) {
+            return undefined;
+        }
+        const Descriptor = Object.assign({}, this._configurableProperties[DescriptorIndex]);
+        if (Descriptor.Hashmarks != null) {
+            Descriptor.Hashmarks = Descriptor.Hashmarks.slice();
+        }
+        if (Descriptor.Suggestions != null) {
+            Descriptor.Suggestions = Descriptor.Suggestions.slice();
+        }
+        if (Descriptor.ValueList != null) {
+            Descriptor.ValueList = Descriptor.ValueList.slice();
+        }
+        return Descriptor;
+    }
     /**** configure ****/
     configure(OptionSet) {
         expectPlainObject('options set', OptionSet);
