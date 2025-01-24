@@ -743,7 +743,7 @@
 
   export function ValueIsSerializableValue (Value:any):boolean {
     switch (true) {
-      case (Value === null):
+      case (Value == null):                // deliberately also allows undefined
       case ValueIsBoolean(Value):
       case ValueIsNumber(Value):
       case ValueIsString(Value):
