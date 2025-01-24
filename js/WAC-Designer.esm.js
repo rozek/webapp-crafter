@@ -16,7 +16,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 import { 
 //  throwError,
-quoted, HTMLsafe, ValuesAreEqual as _ValuesAreEqual, ValueIsOrdinal, ValueIsText, ValueIsPlainObject, ValueIsArray, ValueIsList, ValueIsListSatisfying, allowOrdinal, allowTextline, expectList, allowListSatisfying, allowFunction, allowOneOf, } from 'javascript-interface-library';
+quoted, HTMLsafe, ValuesAreEqual as _ValuesAreEqual, ValueIsNumber, ValueIsOrdinal, ValueIsText, ValueIsTextline, ValueIsPlainObject, ValueIsArray, ValueIsList, ValueIsListSatisfying, allowOrdinal, allowTextline, expectList, allowListSatisfying, allowFunction, allowOneOf, } from 'javascript-interface-library';
 function ValuesAreEqual(a, b, Mode) {
     try {
         return _ValuesAreEqual(a, b, Mode);
@@ -33,7 +33,7 @@ import { html, useState, useRef, useEffect, useMemo, useCallback, } from 'htm/pr
 import { customAlphabet } from 'nanoid';
 // @ts-ignore TS2307 typescript has problems importing "nanoid-dictionary"
 import { nolookalikesSafe } from 'nanoid-dictionary';
-import { throwError, throwReadOnlyError, fromDocumentTo, WAC_FontWeights, WAC_FontStyles, WAC_TextDecorationLines, WAC_TextDecorationStyles, WAC_TextAlignments, WAC_BackgroundModes, WAC_BorderStyles, WAC_Cursors, WAC_Overflows, ValueIsBehavior, ValueIsApplet, ValueIsPage, ValueIsWidget, ValueIsErrorReport, allowPage, BehaviorIsIntrinsic, GestureRecognizer, useDesigner, rerender as WAC_rerender, OperationWasConfirmed, } from "./WAC-Runtime.esm.js";
+import { throwError, throwReadOnlyError, fromDocumentTo, WAC_FontWeights, WAC_FontStyles, WAC_TextDecorationLines, WAC_TextDecorationStyles, WAC_TextAlignments, WAC_BackgroundModes, WAC_BorderStyles, WAC_Cursors, WAC_Overflows, ValueIsBehavior, ValueIsApplet, ValueIsPage, ValueIsWidget, ValueIsErrorReport, allowPage, acceptableValue, ValueIsLineList, ValueIsNumberList, BehaviorIsIntrinsic, GestureRecognizer, useDesigner, rerender as WAC_rerender, OperationWasConfirmed, } from "./WAC-Runtime.esm.js";
 /**** constants for special input situations ****/
 const noSelection = {};
 const multipleValues = {};
@@ -7453,36 +7453,84 @@ DesignerState.SynopsisEditor.View = WAD_SynopsisEditor;
 function WAD_ValueEditor() {
     const onClose = useCallback(() => closeDialog('ValueEditor'));
     const { selectedWidgets } = DesignerState;
-    let ValueType = 'string';
+    let enabled = (selectedWidgets.length > 0);
+    let EditorType = commonValueOf(selectedWidgets.map((Widget) => {
+        var _a;
+        return (_a = Widget.configurableProperty('Value')) === null || _a === void 0 ? void 0 : _a.EditorType;
+    }));
+    let ValueType;
+    switch (EditorType) {
+        case 'textline-input':
+        case 'password-input':
+        case 'search-input':
+        case 'phone-number-input':
+        case 'email-address-input':
+        case 'url-input':
+        case 'color-input':
+        case 'drop-down':
+            ValueType = 'textline';
+            break;
+        case 'number-input':
+        case 'integer-input':
+        case 'slider':
+            ValueType = 'number';
+            break;
+        case 'text-input':
+        case 'html-input':
+        case 'css-input':
+        case 'javascript-input':
+        case 'json-input':
+            ValueType = 'text';
+            break;
+        case 'linelist-input':
+            ValueType = 'linelist';
+            break;
+        case 'numberlist-input':
+            ValueType = 'numberlist';
+            break;
+    }
+    enabled = enabled && (ValueType != null);
     let ValueToEdit = commonValueOf(selectedWidgets.map((Widget) => Widget.Value));
     switch (true) {
         case (ValueToEdit == null):
         case (ValueToEdit === multipleValues):
         case (ValueToEdit === noSelection):
+            break; // editor will be disabled anyway
+        case (ValueType === 'textline'):
+            ValueToEdit = acceptableValue(ValueToEdit, ValueIsTextline, '');
+            break;
+        case (ValueType === 'number'):
+            ValueToEdit = acceptableValue(ValueToEdit, ValueIsNumber, 0) + '';
+            break;
+        case (ValueType === 'text'):
+            ValueToEdit = acceptableValue(ValueToEdit, ValueIsText, '');
+            break;
+        case (ValueType === 'linelist'):
+            ValueToEdit = acceptableValue(ValueToEdit, ValueIsLineList, []).join('\n');
+            break;
+        case (ValueType === 'numberlist'):
+            ValueToEdit = acceptableValue(ValueToEdit, ValueIsNumberList, []).join('\n');
             break;
         default:
-            ValueType = typeof ValueToEdit;
-            if (ValueType === 'object') {
-                ValueToEdit = JSON.stringify(ValueToEdit, null, 2);
-            }
-            else {
-                ValueToEdit = '' + ValueToEdit;
-            }
+            ValueToEdit = '';
     }
     function _onValueInput(Event) {
         const editedValue = Event.target.value;
         let Value = undefined;
         switch (ValueType) {
-            case 'boolean':
-                Value = Boolean(editedValue);
-                break;
             case 'number':
                 Value = Number(editedValue);
                 break;
-            case 'string':
+            case 'text':
                 Value = editedValue;
                 break;
-            default: Value = JSON.parse(editedValue); // may fail!
+            case 'linelist':
+                Value = editedValue.split('\n');
+                break;
+            case 'numberlist':
+                Value = editedValue.split('\n').map(Number).filter((Value) => !isNaN(Value));
+                break;
+            default: Value = editedValue.split('\n')[0];
         }
         doConfigureSelectedWidgets('Value', Value);
     }
@@ -7493,7 +7541,7 @@ function WAD_ValueEditor() {
       <${WAD_horizontally}>
         <${WAD_Label} style="width:52px">Visual</>
         <${WAD_TextlineInput} Placeholder="(visual name)" style="flex:1 0 auto"
-          enabled=${selectedWidgets.length > 0}
+          enabled=${enabled}
           Value=${commonValueOf(selectedWidgets.map((Widget) => Widget.Name))}
           onInput=${(Event) => doConfigureSelectedWidgets('Name', Event.target.value)}
         />
