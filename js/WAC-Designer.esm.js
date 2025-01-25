@@ -770,7 +770,7 @@ function commonValueItemOf(ValueList, Entry) {
         case undefined:
         case noSelection:
         case multipleValues: return commonValue;
-        default: return (typeof commonValue === 'object'
+        default: return (typeof commonValue === 'object' // also works for arrays
             ? commonValue[Entry]
             : commonValue);
     }
@@ -7521,6 +7521,9 @@ function WAD_ValueEditor() {
         const editedValue = Event.target.value;
         let Value = undefined;
         switch (ValueType) {
+            case 'textline':
+                Value = editedValue.split('\n')[0];
+                break;
             case 'number':
                 Value = Number(editedValue);
                 break;
@@ -7533,7 +7536,7 @@ function WAD_ValueEditor() {
             case 'numberlist':
                 Value = editedValue.split('\n').map(Number).filter((Value) => !isNaN(Value));
                 break;
-            default: Value = editedValue.split('\n')[0];
+            default: Value = editedValue;
         }
         doConfigureSelectedWidgets('Value', Value);
     }
