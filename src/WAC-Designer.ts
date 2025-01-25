@@ -845,7 +845,7 @@
       case noSelection:
       case multipleValues: return commonValue
       default: return (
-        typeof commonValue === 'object'
+        typeof commonValue === 'object'                 // also works for arrays
         ? commonValue[Entry]
         : commonValue
       )
@@ -8269,13 +8269,14 @@ console.log('DesignerState',DesignerState)
     function _onValueInput (Event:Indexable) {
       const editedValue = Event.target.value; let Value:any = undefined
         switch (ValueType) {
-          case 'number':   Value = Number(editedValue);     break
-          case 'text':     Value = editedValue;             break
-          case 'linelist': Value = editedValue.split('\n'); break
+          case 'textline': Value = editedValue.split('\n')[0]; break
+          case 'number':   Value = Number(editedValue);        break
+          case 'text':     Value = editedValue;                break
+          case 'linelist': Value = editedValue.split('\n');    break
           case 'numberlist':
             Value = editedValue.split('\n').map(Number).filter((Value:number) => ! isNaN(Value))
             break
-          default:         Value = editedValue.split('\n')[0]
+          default:         Value = editedValue
         }
       doConfigureSelectedWidgets('Value',Value)
     }
