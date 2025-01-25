@@ -5271,7 +5271,10 @@ console.log('DesignerState',DesignerState)
           enabled=${mayRedo()} onClick=${redoOperation}
         />
         <${WAD_PseudoFileInput} Icon="${IconFolder}/arrow-up-from-bracket.png"
-          onChange=${doImportFromFile}
+          onChange=${(Event:Indexable) => {
+            doImportFromFile(Event)
+            Event.target.value = null
+          }}
         />
         <${WAD_PseudoDropDown} Icon="${IconFolder}/arrow-down-to-bracket.png"
           Placeholder="(please choose)" Value=""
