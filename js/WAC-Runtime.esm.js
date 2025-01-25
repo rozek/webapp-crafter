@@ -9007,7 +9007,7 @@ function registerIntrinsicBehaviorsIn(Applet) {
             return html `<div class="WAC Content PseudoDropDown">
         <div style="
           -webkit-mask-image:url(${IconURL}); mask-image:url(${IconURL});
-          background-color:${Color};
+          background-color:${Color || 'black'};
         "></div>
         <select disabled=${Enabling == false} onInput=${_onInput}>
           ${Options.map((Option) => {
