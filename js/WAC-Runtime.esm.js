@@ -5187,6 +5187,49 @@ export class WAC_Widget extends WAC_Visual {
     // @ts-ignore TS2446 allow WAC_Widget to access a protected member of WAC_Page
     get isAttached() { var _a, _b; return (((_b = (_a = this._Container) === null || _a === void 0 ? void 0 : _a._Container) === null || _b === void 0 ? void 0 : _b.isAttached) == true); }
     set isAttached(_) { throwReadOnlyError('isAttached'); }
+    /**** closestOutline ****/
+    get closestOutline() {
+        const { x, y, Width, Height } = this.Geometry;
+        const Outlines = this.Page.WidgetList.slice(0, this.Index)
+            .filter((Widget) => {
+            if (Widget.normalizedBehavior !== 'basic_controls.outline') {
+                return false;
+            }
+            const { x: WidgetX, y: WidgetY, Width: WidgetW, Height: WidgetH } = Widget.Geometry;
+            return ((WidgetX <= x) && (WidgetX + WidgetW >= x + Width) &&
+                (WidgetY <= y) && (WidgetY + WidgetH >= y + Height));
+        });
+        if (Outlines.length <= 1) {
+            return Outlines[0];
+        }
+        const ScoreFor = new Map();
+        Outlines.forEach((Widget) => {
+            const { x: WidgetX, y: WidgetY, Width: WidgetW, Height: WidgetH } = Widget.Geometry;
+            ScoreFor.set(Widget, ((x - WidgetX) * WidgetH + (WidgetX + WidgetW - x - Width) * WidgetH +
+                (y - WidgetY) * WidgetW + (WidgetY + WidgetH - y - Height) * WidgetW));
+        });
+        // @ts-ignore TS6057 no, the ScoreFor entries are not undefined
+        Outlines.sort((a, b) => ScoreFor.get(a) - ScoreFor.get(b));
+        return Outlines[0];
+    }
+    set closestOutline(_) { throwReadOnlyError('closestOutline'); }
+    /**** Outline ****/
+    Outline(Name) {
+        expectName('outline name', Name);
+        const normalizedName = Name.toLowerCase();
+        const { x, y, Width, Height } = this.Geometry;
+        const Outlines = this.Page.WidgetList.slice(0, this.Index)
+            .filter((Widget) => {
+            if ((Widget.normalizedBehavior !== 'basic_controls.outline') ||
+                (Widget.normalizedName !== normalizedName)) {
+                return false;
+            }
+            const { x: WidgetX, y: WidgetY, Width: WidgetW, Height: WidgetH } = Widget.Geometry;
+            return ((WidgetX <= x) && (WidgetX + WidgetW >= x + Width) &&
+                (WidgetY <= y) && (WidgetY + WidgetH >= y + Height));
+        });
+        return Outlines.pop();
+    }
     get Lock() { return this._Lock; }
     set Lock(newLock) {
         expectBoolean('widget layout lock', newLock);
