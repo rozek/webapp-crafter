@@ -5190,7 +5190,7 @@ export class WAC_Widget extends WAC_Visual {
     /**** closestOutline ****/
     get closestOutline() {
         const { x, y, Width, Height } = this.Geometry;
-        const Outlines = this.Page.WidgetList.slice(0, this.Index)
+        const Outlines = this.Page.WidgetList.slice(this.Index + 1)
             .filter((Widget) => {
             if (Widget.normalizedBehavior !== 'basic_controls.outline') {
                 return false;
