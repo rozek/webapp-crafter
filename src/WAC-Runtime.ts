@@ -6026,7 +6026,7 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     public get closestOutline ():WAC_Widget|undefined  {
       const { x,y, Width,Height } = this.Geometry
 
-      const Outlines = (this.Page as WAC_Page).WidgetList.slice(0,this.Index)
+      const Outlines = (this.Page as WAC_Page).WidgetList.slice(this.Index+1)
       .filter((Widget:WAC_Widget) => {
         if (Widget.normalizedBehavior !== 'basic_controls.outline') {
           return false
