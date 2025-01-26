@@ -6021,6 +6021,72 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     public get isAttached ():boolean  { return (this._Container?._Container?.isAttached == true) }
     public set isAttached (_:boolean) { throwReadOnlyError('isAttached') }
 
+  /**** closestOutline ****/
+
+    public get closestOutline ():WAC_Widget|undefined  {
+      const { x,y, Width,Height } = this.Geometry
+
+      const Outlines = (this.Page as WAC_Page).WidgetList.slice(0,this.Index)
+      .filter((Widget:WAC_Widget) => {
+        if (Widget.normalizedBehavior !== 'basic_controls.outline') {
+          return false
+        }
+
+        const {
+          x:WidgetX,y:WidgetY, Width:WidgetW,Height:WidgetH
+        } = Widget.Geometry
+
+        return (
+          (WidgetX <= x) && (WidgetX + WidgetW >= x + Width) &&
+          (WidgetY <= y) && (WidgetY + WidgetH >= y + Height)
+        )
+      })
+      if (Outlines.length <= 1) { return Outlines[0] }
+
+      const ScoreFor:Map<WAC_Widget,number> = new Map()
+        Outlines.forEach((Widget:WAC_Widget) => {
+          const {
+            x:WidgetX,y:WidgetY, Width:WidgetW,Height:WidgetH
+          } = Widget.Geometry
+
+          ScoreFor.set(Widget,(
+            (x-WidgetX)*WidgetH + (WidgetX+WidgetW-x-Width)*WidgetH +
+            (y-WidgetY)*WidgetW + (WidgetY+WidgetH-y-Height)*WidgetW
+          ))
+        })
+// @ts-ignore TS6057 no, the ScoreFor entries are not undefined
+      Outlines.sort((a,b) => ScoreFor.get(a)-ScoreFor.get(b))
+      return Outlines[0]
+    }
+    public set closestOutline (_:boolean) { throwReadOnlyError('closestOutline') }
+
+  /**** Outline ****/
+
+    public Outline (Name:WAC_Name):WAC_Widget|undefined  {
+      expectName('outline name',Name)
+      const normalizedName = Name.toLowerCase()
+
+      const { x,y, Width,Height } = this.Geometry
+
+      const Outlines = (this.Page as WAC_Page).WidgetList.slice(0,this.Index)
+      .filter((Widget:WAC_Widget) => {
+        if (
+          (Widget.normalizedBehavior !== 'basic_controls.outline') ||
+          (Widget.normalizedName     !== normalizedName)
+        ) { return false }
+
+        const {
+          x:WidgetX,y:WidgetY, Width:WidgetW,Height:WidgetH
+        } = Widget.Geometry
+
+        return (
+          (WidgetX <= x) && (WidgetX + WidgetW >= x + Width) &&
+          (WidgetY <= y) && (WidgetY + WidgetH >= y + Height)
+        )
+      })
+      return Outlines.pop()
+    }
+
   /**** Lock ****/
 
     protected _Lock:boolean = false
