@@ -10673,10 +10673,10 @@ function startup() {
 async function startWAC() {
     console.log('starting WebApp Crafter Runtime...');
     /**** find rendering target (with applet name) ****/
-    let AppletElement = document.body.querySelector('div[type="wat/applet"]');
+    let AppletElement = document.body.querySelector('div[type="wac/applet"]');
     if (AppletElement == null) {
         AppletElement = document.createElement('div');
-        AppletElement.setAttribute('type', 'wat/applet');
+        AppletElement.setAttribute('type', 'wac/applet');
         AppletElement.classList.add('fullscreen');
         document.body.appendChild(AppletElement);
     }
