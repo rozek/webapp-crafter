@@ -12708,11 +12708,11 @@ console.log('rendering...')
 
   /**** read applet script - if stored separately ****/
 
-    let ScriptElement = document.querySelector('script[type="wat/applet-script"]')
+    let ScriptElement = document.querySelector('script[type="wac/applet-script"]')
 
   /**** deserialize applet ****/
 
-    let SerializationElement = document.querySelector('script[type="wat/applet"]')
+    let SerializationElement = document.querySelector('script[type="wac/applet"]')
 
     let Applet:WAC_Applet|undefined = undefined
       let Serialization = await AppletStore.getItem(AppletName)
