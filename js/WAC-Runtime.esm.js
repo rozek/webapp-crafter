@@ -4556,6 +4556,7 @@ export class WAC_Applet extends WAC_Visual {
     /**** deserializedFrom ****/
     static deserializedFrom(JSONString) {
         expectString('JSON string', JSONString);
+        debugger;
         let Serialization;
         try {
             Serialization = JSON.parse(JSONString);
