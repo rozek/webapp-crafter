@@ -4556,7 +4556,6 @@ export class WAC_Applet extends WAC_Visual {
     /**** deserializedFrom ****/
     static deserializedFrom(JSONString) {
         expectString('JSON string', JSONString);
-        debugger;
         let Serialization;
         try {
             Serialization = JSON.parse(JSONString);
@@ -10691,9 +10690,9 @@ async function startWAC() {
         DesignerAssetsBase = 'https://rozek.github.io/webapp-crafter/';
     }
     /**** read applet script - if stored separately ****/
-    let ScriptElement = document.querySelector('script[type="wat/applet-script"]');
+    let ScriptElement = document.querySelector('script[type="wac/applet-script"]');
     /**** deserialize applet ****/
-    let SerializationElement = document.querySelector('script[type="wat/applet"]');
+    let SerializationElement = document.querySelector('script[type="wac/applet"]');
     let Applet = undefined;
     let Serialization = await AppletStore.getItem(AppletName);
     if (Serialization != null) {
