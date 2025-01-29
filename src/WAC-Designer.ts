@@ -2835,7 +2835,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
   }
 
   document.write(\`
-  <div type="wat/applet" name="${AppletName}" class="${withMobileFrame ? 'withMobileFrame' : ''}" style="
+  <div type="wac/applet" name="${AppletName}" class="${withMobileFrame ? 'withMobileFrame' : ''}" style="
     display:block; position:absolute;
     left:\${OffsetX}px; top:\${OffsetY}px; width:\${Width}px; height:\${Height}px;
     \${minWidth  == null ? '' : \`min-width:\${minWidth}px; \`}
@@ -2847,10 +2847,10 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
   \`)
   ${'<'}/script>
 
-  ${'<'}script type="wat/applet">${JSON.stringify(Serialization)}${'<'}/script>
+  ${'<'}script type="wac/applet">${JSON.stringify(Serialization)}${'<'}/script>
   ${(AppletScript || '').trim() === ''
     ? ''
-    : `${'<'}script type="wat/applet-script">${AppletScript}\n${'<'}/script>`
+    : `${'<'}script type="wac/applet-script">${AppletScript}\n${'<'}/script>`
   }
  </head>
  <body></body>
@@ -2866,7 +2866,218 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     }
   }
 
-//------------------------------------------------------------------------------
+/**** generatedEmbeddableAppletFromWidget ****/
+
+  function generatedEmbeddableAppletFromWidget (BaseWidget:WAC_Widget):void {
+    if (BaseWidget == null) {
+      window.alert('No Widget selected')
+      return
+    }
+
+    const { Applet } = DesignerState
+
+    const { Width,Height } = BaseWidget.Size
+
+    const AppletName    = BaseWidget.Name || 'WAC-Applet'
+    const AppletWidgets = (
+      BaseWidget.normalizedBehavior === 'basic_controls.Outline'
+      ? BaseWidget.bundledWidgets()
+      : [BaseWidget]
+    )
+
+    const serializedWidgets = AppletWidgets.map(
+      (Widget:WAC_Widget) => Widget.Serialization
+    )
+
+    const BaseGeometry = BaseWidget.Geometry
+    const PaneGeometry = { x:0,y:0, Width:BaseGeometry.Width,Height:BaseGeometry.Height }
+    serializedWidgets.forEach((Serialization:Indexable,i:number) => {
+      const Widget = AppletWidgets[i]
+
+      let Geometry = GeometryOfWidgetRelativeTo(Widget,BaseGeometry,PaneGeometry)
+      const { x,y, Width,Height } = Geometry
+      Serialization.Offsets = [x,Width, y,Height]
+      delete Serialization.Anchors
+    })
+
+    const customBehaviorSet:Indexable = { widget:{} }
+      AppletWidgets.forEach((Widget:WAC_Widget) => {
+        const Behavior = Widget.Behavior
+        if (Behavior == null) { return }
+
+        if (! BehaviorIsIntrinsic(Behavior)) {
+          const normalizedName = Behavior.toLowerCase()
+          const Registration   = Applet._BehaviorPool.widget[normalizedName]
+          customBehaviorSet.widget[Behavior] = Registration.activeScript
+        }
+      })
+    const Serialization = {
+      Name:AppletName, BehaviorSet:customBehaviorSet,
+      Width,Height, toBeCentered:true,withMobileFrame:false,
+      minWidth:Width,maxWidth:Width, minHeight:Height,maxHeight:Height,
+      PageList:[{ WidgetList:serializedWidgets }]
+    }
+
+    const JSONstring = JSON.stringify(Serialization)
+
+    const encodedSource = (new TextEncoder()).encode(JSONstring)
+    const decodedSource = (new TextDecoder()).decode(encodedSource)
+    if (JSONstring === decodedSource) {
+      download(encodedSource, AppletName + '.json', 'text/html;charset=utf-8')
+    } else {
+      window.alert('this WebApp generation is not stable')
+    }
+  }/**** generatedStandaloneAppletFromWidget ****/
+
+  function generatedStandaloneAppletFromWidget (BaseWidget:WAC_Widget):void {
+    if (BaseWidget == null) {
+      window.alert('No Widget selected')
+      return
+    }
+
+    const { Applet } = DesignerState
+
+    const { Width,Height } = BaseWidget.Size
+
+    const AppletName    = BaseWidget.Name || 'WAC-Applet'
+    const AppletWidgets = (
+      BaseWidget.normalizedBehavior === 'basic_controls.outline'
+      ? BaseWidget.bundledWidgets()
+      : [BaseWidget]
+    )
+
+    const serializedWidgets = AppletWidgets.map(
+      (Widget:WAC_Widget) => Widget.Serialization
+    )
+
+    const BaseGeometry = BaseWidget.Geometry
+    const PaneGeometry = { x:0,y:0, Width:BaseGeometry.Width,Height:BaseGeometry.Height }
+    serializedWidgets.forEach((Serialization:Indexable,i:number) => {
+      const Widget = AppletWidgets[i]
+
+      let Geometry = GeometryOfWidgetRelativeTo(Widget,BaseGeometry,PaneGeometry)
+      const { x,y, Width,Height } = Geometry
+      Serialization.Offsets = [x,Width, y,Height]
+      delete Serialization.Anchors
+    })
+
+    const customBehaviorSet:Indexable = { widget:{} }
+      AppletWidgets.forEach((Widget:WAC_Widget) => {
+        const Behavior = Widget.Behavior
+        if (Behavior == null) { return }
+
+        if (! BehaviorIsIntrinsic(Behavior)) {
+          const normalizedName = Behavior.toLowerCase()
+          const Registration   = Applet._BehaviorPool.widget[normalizedName]
+          customBehaviorSet.widget[Behavior] = Registration.activeScript
+        }
+      })
+    const Serialization = {
+      Name:AppletName, BehaviorSet:customBehaviorSet,
+      Width,Height, toBeCentered:true,withMobileFrame:false,
+      minWidth:Width,maxWidth:Width, minHeight:Height,maxHeight:Height,
+      PageList:[{ WidgetList:serializedWidgets }]
+    }
+
+    const AppletSource  = `
+<!DOCTYPE html>
+<html lang="en" charset="utf-8" style="width:100%">
+ <head>
+  <meta charset="utf-8"/>
+
+  <meta name="viewport"         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+  <meta name="format-detection" content="telephone=no">
+
+  <style>
+    html { text-size-adjust:100% }
+
+    html, body { width:100%; height:100%; width:100vw; height:100vh; margin:0px; padding:0px }
+    html       { overflow:hidden scroll }
+  </style>
+  <link rel="stylesheet" href="https://rozek.github.io/marked-katex-extension/dist/katex.min.css">
+
+  ${'<'}script type="importmap">
+  {
+    "imports": {
+      "javascript-interface-library":"https://rozek.github.io/javascript-interface-library/dist/javascript-interface-library.esm.js",
+      "htm/preact":                  "https://rozek.github.io/htm/preact/standalone.module.js",
+      "hyperactiv":                  "https://rozek.github.io/hyperactiv/dist/index.mjs",
+      "nanoid":                      "https://rozek.github.io/nanoid/dist/nanoid.esm.js",
+      "nanoid-dictionary":           "https://rozek.github.io/nanoid-dictionary/dist/nanoid-dictionary.esm.js",
+      "svelte-coordinate-conversion":"https://rozek.github.io/svelte-coordinate-conversion/dist/svelte-coordinate-conversion.esm.js",
+      "svelte-touch-to-mouse":       "https://rozek.github.io/svelte-touch-to-mouse/dist/svelte-touch-to-mouse.esm.js",
+
+      "wac-runtime": "https://rozek.github.io/webapp-crafter/js/wat-runtime.esm.js",
+      "wac-designer":"https://rozek.github.io/webapp-crafter/js/wat-designer.esm.js",
+
+      "marked":                "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js",
+      "marked-katex-extension":"https://rozek.github.io/marked-katex-extension/dist/marked-katex-extension.esm.js",
+      "marked-highlight":      "https://cdn.jsdelivr.net/npm/marked-highlight/+esm",
+      "highlight.js/lib/core":                "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/highlight.min.js",
+      "highlight.js/lib/languages/css":       "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/css.min.js",
+      "highlight.js/lib/languages/javascript":"https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/javascript.min.js",
+      "highlight.js/lib/languages/java":      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/java.min.js",
+      "highlight.js/lib/languages/json":      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/json.min.js",
+      "highlight.js/lib/languages/typescript":"https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/typescript.min.js",
+      "highlight.js/lib/languages/xml":       "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/es/languages/xml.min.js"
+    }
+  }
+  ${'<'}/script>
+  ${'<'}script src="https://rozek.github.io/webapp-crafter/js/localforage.min.js">${'<'}/script>
+  ${'<'}script src="https://rozek.github.io/webapp-crafter/js/WAC-Runtime.esm.js" type="module">${'<'}/script>
+
+  ${'<'}script>
+  AppletFromWidget = true      // global variable indicating this type of applet
+
+  let [
+    minWidth,maxWidth, minHeight,maxHeight, toBeCentered,withMobileFrame
+  ] = [
+    ${Width},${Width}, ${Height},${Height}, true,false
+  ]
+
+  const ViewportWidth  = window.innerWidth
+  const ViewportHeight = window.innerHeight
+
+  let Width  = Math.max(minWidth,  Math.min(ViewportWidth,  maxWidth  == null ? Infinity : maxWidth))
+  let Height = Math.max(minHeight, Math.min(ViewportHeight, maxHeight == null ? Infinity : maxHeight))
+
+  let OffsetX = (
+    (Width < ViewportWidth) && toBeCentered
+    ? Math.floor((ViewportWidth-Width)/2)
+    : 0
+  )
+  let OffsetY = (
+    (Height < ViewportHeight) && toBeCentered
+    ? Math.floor((ViewportHeight-Height)/2)
+    : 0
+  )
+
+  document.write(\`
+  <div type="wac/applet" name="${AppletName}" style="
+    display:block; position:absolute;
+    left:\${OffsetX}px; top:\${OffsetY}px; width:\${Width}px; height:\${Height}px;
+    \${minWidth  == null ? '' : \`min-width:\${minWidth}px; \`}
+    \${maxWidth  == null ? '' : \`max-width:\${maxWidth}px; \`}
+    \${minHeight == null ? '' : \`min-height:\${minHeight}px; \`}
+    \${maxHeight == null ? '' : \`max-height:\${maxHeight}px; \`}
+  "></div>
+  \`)
+  ${'<'}/script>
+
+  ${'<'}script type="wac/applet">${JSON.stringify(Serialization)}${'<'}/script>
+ </head>
+ <body></body>
+</html>
+    `.trim()
+
+    const encodedSource = (new TextEncoder()).encode(AppletSource)
+    const decodedSource = (new TextDecoder()).decode(encodedSource)
+    if (AppletSource === decodedSource) {
+      download(encodedSource, AppletName + '.html', 'text/html;charset=utf-8')
+    } else {
+      window.alert('this WebApp generation is not stable')
+    }
+  }//------------------------------------------------------------------------------
 //--                                  Shelf                                   --
 //------------------------------------------------------------------------------
 
@@ -4873,6 +5084,12 @@ console.error(Signal)
     switch (Variant) {
       case 'without Designer': generateStandaloneWebApp(false); break
       case 'with Designer':    generateStandaloneWebApp(true); break
+      case 'embeddable from selected Widget':
+        generatedEmbeddableAppletFromWidget(DesignerState.selectedWidgets[0])
+        break
+      case 'standalone from selected Widget':
+        generatedStandaloneAppletFromWidget(DesignerState.selectedWidgets[0])
+        break
       default: console.error('InvalidArgument: invalid generation variant ' + quoted(Variant))
     }
    }
@@ -5312,7 +5529,12 @@ console.log('DesignerState',DesignerState)
         />
         <${WAD_PseudoDropDown} Icon="${IconFolder}/clapperboard-play.png"
           Placeholder="(please choose)" Value=""
-          OptionList=${['without Designer','with Designer']}
+          OptionList=${[
+            'without Designer','with Designer',
+            '----',
+            'embeddable from selected Widget',
+            'standalone from selected Widget'
+          ]}
           onInput=${(Event:Indexable) => {
             doGenerateApplet(Event.target.value)
             Event.target.value = ''
@@ -9077,6 +9299,56 @@ console.log('DesignerState',DesignerState)
 /**** newId - uses nanoid with custom dictionary ****/
 
   export const newId = customAlphabet(nolookalikesSafe,21)
+
+/**** GeometryOfWidgetRelativeTo ****/
+
+  function GeometryOfWidgetRelativeTo (
+    Widget:WAC_Widget, BaseGeometry:WAC_Geometry, PaneGeometry:WAC_Geometry
+  ):WAC_Geometry {
+    const WidgetAnchors = Widget.Anchors
+
+    const {
+      x:WidgetX, y:WidgetY, Width:WidgetWidth, Height:WidgetHeight
+    } = Widget.Geometry
+
+    const {
+      minWidth,minHeight, maxWidth,maxHeight
+    } = Widget
+
+    const { x:BaseX, y:BaseY, Width:BaseWidth, Height:BaseHeight } = BaseGeometry
+    const { x:PaneX, y:PaneY, Width:PaneWidth, Height:PaneHeight } = PaneGeometry
+
+    let x:number,y:number, Width:number,Height:number
+      switch (WidgetAnchors[0]) {
+        case 'left-width':
+          x     = WidgetX-BaseX
+          Width = WidgetWidth
+          break
+        case 'width-right':
+          x     = PaneWidth - (BaseX+BaseWidth - (WidgetX+WidgetWidth)) - WidgetWidth
+          Width = WidgetWidth
+          break
+        case 'left-right':
+          x     = WidgetX-BaseX
+          Width = Math.max(minWidth || 0, Math.min(PaneWidth-BaseWidth+WidgetWidth, maxWidth || Infinity))
+      }
+
+      switch (WidgetAnchors[1]) {
+        case 'top-height':
+          y      = WidgetY-BaseY
+          Height = WidgetHeight
+          break
+        case 'height-bottom':
+          y      = PaneHeight - (BaseY+BaseHeight - (WidgetY+WidgetHeight)) - WidgetHeight
+          Height = WidgetHeight
+          break
+        case 'top-bottom':
+          y      = WidgetY-BaseY
+          Height = Math.max(minHeight || 0, Math.min(PaneHeight-BaseHeight+WidgetHeight, maxHeight || Infinity))
+      }
+// @ts-ignore TS5905 all variables will be assigned by now
+    return { x,y, Width,Height }
+  }
 
 /**** consume/consumingEvent ****/
 
