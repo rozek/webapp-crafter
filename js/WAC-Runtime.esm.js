@@ -6124,6 +6124,9 @@ export class WAC_Widget extends WAC_Visual {
             Serialization.Anchors = this.Anchors;
         }
         Serialization.Offsets = this.Offsets;
+        [
+            'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
+        ].forEach((Name) => this._serializePropertyInto(Name, Serialization));
     }
     /**** _deserializeConfigurationFrom ****/
     _deserializeConfigurationFrom(Serialization) {
@@ -6160,7 +6163,8 @@ export class WAC_Widget extends WAC_Visual {
         /**** the remaining properties are simpler ****/
         ;
         [
-            'Lock', 'Visibility', 'Enabling'
+            'Lock', 'Visibility', 'Enabling',
+            'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
         ].forEach((Name) => deserializeProperty(Name));
         /**** common properties including "activeScript" ****/
         super._deserializeConfigurationFrom(Serialization);
