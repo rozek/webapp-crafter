@@ -7186,6 +7186,10 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
         Serialization.Anchors = this.Anchors
       }
       Serialization.Offsets = this.Offsets
+
+      ;[
+        'minWidth','maxWidth', 'minHeight','maxHeight',
+      ].forEach((Name:string) => this._serializePropertyInto(Name,Serialization))
     }
 
   /**** _deserializeConfigurationFrom ****/
@@ -7233,7 +7237,8 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     /**** the remaining properties are simpler ****/
 
       ;[
-        'Lock','Visibility','Enabling'
+        'Lock','Visibility','Enabling',
+        'minWidth','maxWidth', 'minHeight','maxHeight',
       ].forEach((Name:string) => deserializeProperty(Name))
 
     /**** common properties including "activeScript" ****/
