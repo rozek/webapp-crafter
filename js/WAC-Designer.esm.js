@@ -2595,77 +2595,72 @@ function generateStandaloneWebApp(withDesigner = false) {
         window.alert('this WebApp generation is not stable');
     }
 }
-/**** generatedEmbeddableAppletFromWidget ****/
-function generatedEmbeddableAppletFromWidget(BaseWidget) {
+/**** generatedWebAppFromWidget ****/
+function generatedWebAppFromWidget(BaseWidget) {
     if (BaseWidget == null) {
         window.alert('No Widget selected');
         return;
     }
     const { Applet } = DesignerState;
-    const { Width, Height } = BaseWidget.Size;
-    const AppletName = BaseWidget.Name || 'WAC-Applet';
-    const AppletWidgets = (BaseWidget.normalizedBehavior === 'basic_controls.Outline'
-        ? BaseWidget.bundledWidgets()
-        : [BaseWidget]);
-    const serializedWidgets = AppletWidgets.map((Widget) => Widget.Serialization);
-    const BaseGeometry = BaseWidget.Geometry;
-    const PaneGeometry = { x: 0, y: 0, Width: BaseGeometry.Width, Height: BaseGeometry.Height };
-    serializedWidgets.forEach((Serialization, i) => {
-        const Widget = AppletWidgets[i];
-        let Geometry = GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry);
-        const { x, y, Width, Height } = Geometry;
-        Serialization.Offsets = [x, Width, y, Height];
-        delete Serialization.Anchors;
-    });
-    const customBehaviorSet = { widget: {} };
-    AppletWidgets.forEach((Widget) => {
-        const Behavior = Widget.Behavior;
-        if (Behavior == null) {
-            return;
-        }
-        if (!BehaviorIsIntrinsic(Behavior)) {
-            const normalizedName = Behavior.toLowerCase();
-            const Registration = Applet._BehaviorPool.widget[normalizedName];
-            customBehaviorSet.widget[Behavior] = Registration.activeScript;
-        }
-    });
-    const Serialization = {
-        Name: AppletName, BehaviorSet: customBehaviorSet,
-        Width, Height, toBeCentered: true, withMobileFrame: false,
-        minWidth: Width, maxWidth: Width, minHeight: Height, maxHeight: Height,
-        PageList: [{ WidgetList: serializedWidgets }]
-    };
-    const JSONstring = JSON.stringify(Serialization);
-    const encodedSource = (new TextEncoder()).encode(JSONstring);
-    const decodedSource = (new TextDecoder()).decode(encodedSource);
-    if (JSONstring === decodedSource) {
-        download(encodedSource, AppletName + '.json', 'text/html;charset=utf-8');
-    }
-    else {
-        window.alert('this WebApp generation is not stable');
-    }
-} /**** generatedStandaloneAppletFromWidget ****/
-function generatedStandaloneAppletFromWidget(BaseWidget) {
-    if (BaseWidget == null) {
-        window.alert('No Widget selected');
-        return;
-    }
-    const { Applet } = DesignerState;
-    const { Width, Height } = BaseWidget.Size;
     const AppletName = BaseWidget.Name || 'WAC-Applet';
     const AppletWidgets = (BaseWidget.normalizedBehavior === 'basic_controls.outline'
         ? BaseWidget.bundledWidgets()
         : [BaseWidget]);
+    const { Width, Height } = BaseWidget.Size;
+    let { maxWidth, maxHeight } = BaseWidget;
+    if (maxWidth == null) {
+        maxWidth = Width;
+    }
+    if (maxHeight == null) {
+        maxHeight = Height;
+    }
     const serializedWidgets = AppletWidgets.map((Widget) => Widget.Serialization);
     const BaseGeometry = BaseWidget.Geometry;
-    const PaneGeometry = { x: 0, y: 0, Width: BaseGeometry.Width, Height: BaseGeometry.Height };
+    const PaneGeometry = { x: 0, y: 0, Width, Height };
     serializedWidgets.forEach((Serialization, i) => {
         const Widget = AppletWidgets[i];
         let Geometry = GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry);
-        const { x, y, Width, Height } = Geometry;
-        Serialization.Offsets = [x, Width, y, Height];
-        delete Serialization.Anchors;
+        updateGeometryOf(Serialization, Geometry, PaneGeometry);
     });
+    /**** updateGeometryOf ****/
+    function updateGeometryOf(Serialization, WidgetGeometry, PaneGeometry) {
+        let { x: newX, y: newY, Width: newWidth, Height: newHeight } = WidgetGeometry;
+        const curAnchors = Serialization.Anchors || ['left-right', 'top-height'];
+        const curGeometry = Serialization.Geometry;
+        /**** keep any new Width and Height settings within confiured limits ****/
+        newWidth = Math.max(0, Serialization.minWidth || 0, Math.min(newWidth, Serialization.maxWidth == null ? Infinity : Serialization.maxWidth));
+        if (newHeight != null) {
+            newHeight = Math.max(0, Serialization.minHeight || 0, Math.min(newHeight, Serialization.maxHeight == null ? Infinity : Serialization.maxHeight));
+        }
+        /**** now update any affected Offsets ****/
+        const { Width: outerWidth, Height: outerHeight } = PaneGeometry;
+        switch (curAnchors[0]) {
+            case 'left-width':
+                Serialization.Offsets[0] = newX;
+                Serialization.Offsets[1] = newWidth;
+                break;
+            case 'width-right':
+                Serialization.Offsets[0] = newWidth;
+                Serialization.Offsets[1] = outerWidth - newX - newWidth;
+                break;
+            case 'left-right':
+                Serialization.Offsets[0] = newX;
+                Serialization.Offsets[1] = outerWidth - newX - newWidth;
+        }
+        switch (curAnchors[1]) {
+            case 'top-height':
+                Serialization.Offsets[2] = newY;
+                Serialization.Offsets[3] = newHeight;
+                break;
+            case 'height-bottom':
+                Serialization.Offsets[2] = newHeight;
+                Serialization.Offsets[3] = outerHeight - newY - newHeight;
+                break;
+            case 'top-bottom':
+                Serialization.Offsets[2] = newY;
+                Serialization.Offsets[3] = outerHeight - newY - newHeight;
+        }
+    }
     const customBehaviorSet = { widget: {} };
     AppletWidgets.forEach((Widget) => {
         const Behavior = Widget.Behavior;
@@ -2681,7 +2676,7 @@ function generatedStandaloneAppletFromWidget(BaseWidget) {
     const Serialization = {
         Name: AppletName, BehaviorSet: customBehaviorSet,
         Width, Height, toBeCentered: true, withMobileFrame: false,
-        minWidth: Width, maxWidth: Width, minHeight: Height, maxHeight: Height,
+        minWidth: Width, maxWidth, minHeight: Height, maxHeight,
         PageList: [{ WidgetList: serializedWidgets }]
     };
     const AppletSource = `
@@ -2737,7 +2732,7 @@ function generatedStandaloneAppletFromWidget(BaseWidget) {
   let [
     minWidth,maxWidth, minHeight,maxHeight, toBeCentered,withMobileFrame
   ] = [
-    ${Width},${Width}, ${Height},${Height}, true,false
+    ${Width},${maxWidth}, ${Height},${maxHeight}, true,false
   ]
 
   const ViewportWidth  = window.innerWidth
@@ -4581,11 +4576,8 @@ function doGenerateApplet(Variant) {
         case 'with Designer':
             generateStandaloneWebApp(true);
             break;
-        case 'embeddable from selected Widget':
-            generatedEmbeddableAppletFromWidget(DesignerState.selectedWidgets[0]);
-            break;
-        case 'standalone from selected Widget':
-            generatedStandaloneAppletFromWidget(DesignerState.selectedWidgets[0]);
+        case 'from selected Widget':
+            generatedWebAppFromWidget(DesignerState.selectedWidgets[0]);
             break;
         default: console.error('InvalidArgument: invalid generation variant ' + quoted(Variant));
     }
@@ -4964,8 +4956,7 @@ function WAD_Toolbox() {
           OptionList=${[
         'without Designer', 'with Designer',
         '----',
-        'embeddable from selected Widget',
-        'standalone from selected Widget'
+        'from selected Widget',
     ]}
           onInput=${(Event) => {
         doGenerateApplet(Event.target.value);
