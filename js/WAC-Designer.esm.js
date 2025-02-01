@@ -2625,8 +2625,7 @@ function generatedWebAppFromWidget(BaseWidget) {
     /**** updateGeometryOf ****/
     function updateGeometryOf(Serialization, WidgetGeometry, PaneGeometry) {
         let { x: newX, y: newY, Width: newWidth, Height: newHeight } = WidgetGeometry;
-        const curAnchors = Serialization.Anchors || ['left-right', 'top-height'];
-        const curGeometry = Serialization.Geometry;
+        const curAnchors = Serialization.Anchors || ['left-width', 'top-height'];
         /**** keep any new Width and Height settings within confiured limits ****/
         newWidth = Math.max(0, Serialization.minWidth || 0, Math.min(newWidth, Serialization.maxWidth == null ? Infinity : Serialization.maxWidth));
         newHeight = Math.max(0, Serialization.minHeight || 0, Math.min(newHeight, Serialization.maxHeight == null ? Infinity : Serialization.maxHeight));
