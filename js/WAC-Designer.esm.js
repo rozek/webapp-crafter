@@ -2629,12 +2629,10 @@ function generatedWebAppFromWidget(BaseWidget) {
         const curGeometry = Serialization.Geometry;
         /**** keep any new Width and Height settings within confiured limits ****/
         newWidth = Math.max(0, Serialization.minWidth || 0, Math.min(newWidth, Serialization.maxWidth == null ? Infinity : Serialization.maxWidth));
-        if (newHeight != null) {
-            newHeight = Math.max(0, Serialization.minHeight || 0, Math.min(newHeight, Serialization.maxHeight == null ? Infinity : Serialization.maxHeight));
-        }
+        newHeight = Math.max(0, Serialization.minHeight || 0, Math.min(newHeight, Serialization.maxHeight == null ? Infinity : Serialization.maxHeight));
         /**** now update any affected Offsets ****/
         const { Width: outerWidth, Height: outerHeight } = PaneGeometry;
-        switch (curAnchors[0]) {
+        switch (curAnchors[0] || 'left-width') {
             case 'left-width':
                 Serialization.Offsets[0] = newX;
                 Serialization.Offsets[1] = newWidth;
@@ -2647,7 +2645,7 @@ function generatedWebAppFromWidget(BaseWidget) {
                 Serialization.Offsets[0] = newX;
                 Serialization.Offsets[1] = outerWidth - newX - newWidth;
         }
-        switch (curAnchors[1]) {
+        switch (curAnchors[1] || 'top-height') {
             case 'top-height':
                 Serialization.Offsets[2] = newY;
                 Serialization.Offsets[3] = newHeight;
@@ -2753,14 +2751,19 @@ function generatedWebAppFromWidget(BaseWidget) {
   )
 
   document.write(\`
+ <div style="
+   display:flex; justify-content:center; align-items:center;
+   position:absolute; left:0px; top:0px; right:0px; bottom:0px;
+ ">
   <div type="wac/applet" name="${AppletName}" style="
-    display:block; position:absolute;
-    left:\${OffsetX}px; top:\${OffsetY}px; width:\${Width}px; height:\${Height}px;
+    display:block; position:relative;
+    width:\${Width}px; height:\${Height}px;
     \${minWidth  == null ? '' : \`min-width:\${minWidth}px; \`}
     \${maxWidth  == null ? '' : \`max-width:\${maxWidth}px; \`}
     \${minHeight == null ? '' : \`min-height:\${minHeight}px; \`}
     \${maxHeight == null ? '' : \`max-height:\${maxHeight}px; \`}
   "></div>
+ </div>
   \`)
   ${'<'}/script>
 
