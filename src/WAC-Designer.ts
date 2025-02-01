@@ -2905,12 +2905,12 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
   /**** updateGeometryOf ****/
 
     function updateGeometryOf (
-      Serialization:Indexable, WidgetGeometry:WAC_Geometry, PaneGeometry:WAC_Geometry
+      Serialization:Indexable,
+      WidgetGeometry:WAC_Geometry, PaneGeometry:WAC_Geometry
     ):void {
       let { x:newX,y:newY, Width:newWidth,Height:newHeight } = WidgetGeometry
 
-      const curAnchors  = Serialization.Anchors || ['left-right','top-height']
-      const curGeometry = Serialization.Geometry
+      const curAnchors = Serialization.Anchors || ['left-width','top-height']
 
     /**** keep any new Width and Height settings within confiured limits ****/
 
