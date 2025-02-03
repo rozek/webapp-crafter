@@ -2885,7 +2885,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
 
     const { Width,Height } = BaseWidget.Size
 
-    let { maxWidth,maxHeight } = BaseWidget
+    let { maxWidth,maxHeight, initialMaxWidth,initialMaxHeight } = BaseWidget
       if (maxWidth  == null) { maxWidth  = Width }
       if (maxHeight == null) { maxHeight = Height }
 
@@ -3027,8 +3027,8 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
   const ViewportWidth  = window.innerWidth
   const ViewportHeight = window.innerHeight
 
-  let Width  = Math.max(minWidth,  Math.min(ViewportWidth,  maxWidth  == null ? Infinity : maxWidth))
-  let Height = Math.max(minHeight, Math.min(ViewportHeight, maxHeight == null ? Infinity : maxHeight))
+  let Width  = Math.max(minWidth,  Math.min(ViewportWidth,  initialMaxWidth  || maxWidth  || Infinity))
+  let Height = Math.max(minHeight, Math.min(ViewportHeight, initialMaxHeight || maxHeight || Infinity))
 
   let OffsetX = (
     (Width < ViewportWidth) && toBeCentered
