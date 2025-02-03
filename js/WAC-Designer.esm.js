@@ -2614,6 +2614,12 @@ function generatedWebAppFromWidget(BaseWidget) {
     if (maxHeight == null) {
         maxHeight = Height;
     }
+    if (initialMaxWidth == null) {
+        initialMaxWidth = maxWidth;
+    }
+    if (initialMaxHeight == null) {
+        initialMaxHeight = maxHeight;
+    }
     const serializedWidgets = AppletWidgets.map((Widget) => Widget.Serialization);
     const BaseGeometry = BaseWidget.Geometry;
     const PaneGeometry = { x: 0, y: 0, Width, Height };
@@ -2727,9 +2733,11 @@ function generatedWebAppFromWidget(BaseWidget) {
   AppletFromWidget = true      // global variable indicating this type of applet
 
   let [
-    minWidth,maxWidth, minHeight,maxHeight, toBeCentered,withMobileFrame
+    minWidth,maxWidth, minHeight,maxHeight, initialMaxWidth,initialMaxHeight,
+    toBeCentered,withMobileFrame
   ] = [
-    ${Width},${maxWidth}, ${Height},${maxHeight}, true,false
+    ${Width},${maxWidth}, ${Height},${maxHeight}, ${initialMaxWidth},${initialMaxHeight},
+    true,false
   ]
 
   const ViewportWidth  = window.innerWidth
