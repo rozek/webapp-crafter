@@ -2607,7 +2607,7 @@ function generatedWebAppFromWidget(BaseWidget) {
         ? BaseWidget.bundledWidgets()
         : [BaseWidget]);
     const { Width, Height } = BaseWidget.Size;
-    let { maxWidth, maxHeight } = BaseWidget;
+    let { maxWidth, maxHeight, initialMaxWidth, initialMaxHeight } = BaseWidget;
     if (maxWidth == null) {
         maxWidth = Width;
     }
@@ -2735,8 +2735,8 @@ function generatedWebAppFromWidget(BaseWidget) {
   const ViewportWidth  = window.innerWidth
   const ViewportHeight = window.innerHeight
 
-  let Width  = Math.max(minWidth,  Math.min(ViewportWidth,  maxWidth  == null ? Infinity : maxWidth))
-  let Height = Math.max(minHeight, Math.min(ViewportHeight, maxHeight == null ? Infinity : maxHeight))
+  let Width  = Math.max(minWidth,  Math.min(ViewportWidth,  initialMaxWidth  || maxWidth  || Infinity))
+  let Height = Math.max(minHeight, Math.min(ViewportHeight, initialMaxHeight || maxHeight || Infinity))
 
   let OffsetX = (
     (Width < ViewportWidth) && toBeCentered
