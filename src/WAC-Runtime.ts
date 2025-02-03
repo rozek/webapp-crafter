@@ -7908,6 +7908,13 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
 
   /**** custom Properties ****/
 
+    my.configurableProperties = [
+      { Name:'initialMaxWidth',      Label:'initial max. Width',  minValue:0, Stepping:1,
+        EditorType:'integer-input',  AccessorsFor:'memoized' },
+      { Name:'initialMaxHeight',     Label:'initial max. Height', minValue:0, Stepping:1,
+        EditorType:'integer-input',  AccessorsFor:'memoized' },
+    ]
+
     Object_assign(me,{
     /**** bundledWidgets ****/
 
