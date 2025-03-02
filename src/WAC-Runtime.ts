@@ -7960,7 +7960,10 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
   /**** custom Properties ****/
 
     my.configurableProperties = [
-      { Name:'Value', EditorType:'textline-input', Placeholder:'(enter content path)' }
+      { Name:'Value',
+        EditorType:'textline-input', Placeholder:'(enter content path)' },
+      { Name:'visiblePattern', Label:'visible Pattern', Default:true,
+        EditorType:'checkbox', AccessorsFor:'memoized' },
     ]
 
     Object_assign(me,{
@@ -8078,26 +8081,35 @@ console.warn(`Script Compilation Failure for ${Category} behavior ${Behavior}`,S
     onRender(function (this:Indexable) {
       this._releaseWidgets()
 
-      const Value = this.Value
-      if (Value == null) { return '' }
+      const Value        = this.Value
+      const SourceWidget = (
+        (Value == null) || (Value.trim() === '')
+        ? undefined
+        : this.Applet?.WidgetAtPath(Value as WAC_Path)
+      )
+      const noSourceWidget = (SourceWidget == null) || (SourceWidget === this)
 
-      const SourceWidget = this.Applet?.WidgetAtPath(Value as WAC_Path)
-      if ((SourceWidget == null) || (SourceWidget === this)) { return '' }
+      const withPattern = (noSourceWidget && (my.visiblePattern === true))
 
-      const WidgetsToShow:WAC_Widget[] = (
-        SourceWidget.normalizedBehavior === 'basic_controls.outline'
-        ? (SourceWidget as Indexable).bundledWidgets()
-        : [SourceWidget]
-      ).filter((Widget:Indexable) => (
-        Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === this))
-      ))
+      let WidgetsToShow:WAC_Widget[]
+      if (noSourceWidget) {
+        WidgetsToShow = []
+      } else {
+        WidgetsToShow = (
+          SourceWidget.normalizedBehavior === 'basic_controls.outline'
+          ? (SourceWidget as Indexable).bundledWidgets()
+          : [SourceWidget]
+        ).filter((Widget:Indexable) => (
+          Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === this))
+        ))
         WidgetsToShow.forEach((Widget:Indexable) => Widget._Pane = this)
+      }
       this._shownWidgets = WidgetsToShow
 
       const PaneGeometry = this.Geometry
-      const BaseGeometry = SourceWidget.Geometry
+      const BaseGeometry = noSourceWidget ? PaneGeometry : SourceWidget.Geometry
 
-      return html`<div class="WAC Content WidgetPane">
+      return html`<div class="WAC Content WidgetPane ${withPattern ? 'Placeholder' : ''}">
         ${(WidgetsToShow as any).toReversed().map((Widget:WAC_Widget) => {
           let Geometry = this._GeometryOfWidgetRelativeTo(Widget,BaseGeometry,PaneGeometry)
           return html`<${WAC_WidgetView} Widget=${Widget} Geometry=${Geometry}/>`
@@ -8909,6 +8921,8 @@ console.warn('file drop error',Signal)
       const onClick = (Event:any) => {
         if (this.Enabling == false) { return consumingEvent(Event) }
         this.Value = Event.target.checked
+        this.on('click')(Event)
+        this.on('input')(Event)
       }
 
       const Value = this.Value
@@ -8953,6 +8967,7 @@ console.warn('file drop error',Signal)
       const onClick = (Event:any) => {
         if (this.Enabling == false) { return consumingEvent(Event) }
         this.Value = Event.target.checked
+        this.on('click')(Event)
       }
 
       return html`<input type="radio" class="WAC Radiobutton"
