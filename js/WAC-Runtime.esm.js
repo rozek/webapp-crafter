@@ -6900,7 +6900,10 @@ function registerIntrinsicBehaviorsIn(Applet) {
     `);
         /**** custom Properties ****/
         my.configurableProperties = [
-            { Name: 'Value', EditorType: 'textline-input', Placeholder: '(enter content path)' }
+            { Name: 'Value',
+                EditorType: 'textline-input', Placeholder: '(enter content path)' },
+            { Name: 'visiblePattern', Label: 'visible Pattern', Default: true,
+                EditorType: 'checkbox', AccessorsFor: 'memoized' },
         ];
         Object_assign(me, {
             /**** Value ****/
@@ -6994,21 +6997,25 @@ function registerIntrinsicBehaviorsIn(Applet) {
             var _a;
             this._releaseWidgets();
             const Value = this.Value;
-            if (Value == null) {
-                return '';
+            const SourceWidget = ((Value == null) || (Value.trim() === '')
+                ? undefined
+                : (_a = this.Applet) === null || _a === void 0 ? void 0 : _a.WidgetAtPath(Value));
+            const noSourceWidget = (SourceWidget == null) || (SourceWidget === this);
+            const withPattern = (noSourceWidget && (my.visiblePattern === true));
+            let WidgetsToShow;
+            if (noSourceWidget) {
+                WidgetsToShow = [];
             }
-            const SourceWidget = (_a = this.Applet) === null || _a === void 0 ? void 0 : _a.WidgetAtPath(Value);
-            if ((SourceWidget == null) || (SourceWidget === this)) {
-                return '';
+            else {
+                WidgetsToShow = (SourceWidget.normalizedBehavior === 'basic_controls.outline'
+                    ? SourceWidget.bundledWidgets()
+                    : [SourceWidget]).filter((Widget) => (Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === this))));
+                WidgetsToShow.forEach((Widget) => Widget._Pane = this);
             }
-            const WidgetsToShow = (SourceWidget.normalizedBehavior === 'basic_controls.outline'
-                ? SourceWidget.bundledWidgets()
-                : [SourceWidget]).filter((Widget) => (Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === this))));
-            WidgetsToShow.forEach((Widget) => Widget._Pane = this);
             this._shownWidgets = WidgetsToShow;
             const PaneGeometry = this.Geometry;
-            const BaseGeometry = SourceWidget.Geometry;
-            return html `<div class="WAC Content WidgetPane">
+            const BaseGeometry = noSourceWidget ? PaneGeometry : SourceWidget.Geometry;
+            return html `<div class="WAC Content WidgetPane ${withPattern ? 'Placeholder' : ''}">
         ${WidgetsToShow.toReversed().map((Widget) => {
                 let Geometry = this._GeometryOfWidgetRelativeTo(Widget, BaseGeometry, PaneGeometry);
                 return html `<${WAC_WidgetView} Widget=${Widget} Geometry=${Geometry}/>`;
@@ -7622,6 +7629,8 @@ function registerIntrinsicBehaviorsIn(Applet) {
                     return consumingEvent(Event);
                 }
                 this.Value = Event.target.checked;
+                this.on('click')(Event);
+                this.on('input')(Event);
             };
             const Value = this.Value;
             const checked = (Value == true);
@@ -7653,6 +7662,7 @@ function registerIntrinsicBehaviorsIn(Applet) {
                     return consumingEvent(Event);
                 }
                 this.Value = Event.target.checked;
+                this.on('click')(Event);
             };
             return html `<input type="radio" class="WAC Radiobutton"
         checked=${this.Value == true}
