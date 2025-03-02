@@ -686,7 +686,7 @@
     },
     Toolbox: {                          // always visible while Designer is open
       Title:'Toolbox',        View:undefined,
-      x:NaN, y:NaN, Width:132, Height:194,
+      x:NaN, y:NaN, Width:134, Height:194,
     },
     Inspector: {                             // only visible if Designer is open
       Title:'Inspector',      View:undefined,
@@ -2984,7 +2984,7 @@ console.warn(`unsupported EditorType ${quoted(EditorType)}`)
     html { text-size-adjust:100% }
 
     html, body { width:100%; height:100%; width:100vw; height:100vh; margin:0px; padding:0px }
-    html       { overflow:hidden scroll }
+    html       { overflow:hidden }
   </style>
   <link rel="stylesheet" href="https://rozek.github.io/marked-katex-extension/dist/katex.min.css">
 
