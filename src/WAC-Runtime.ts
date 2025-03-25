@@ -12150,7 +12150,7 @@ console.log('rendering...')
         SourceWidget == null
         ? true
         : SourceWidget.on('visibility-request')()
-      )
+      ) // an invisible SourceWidget is shown if visibility-request returns true
       if (Visibility === false) { return '' }
 
     /**** ...otherwise continue as usual ****/
@@ -12205,7 +12205,8 @@ console.log('rendering...')
             ? (SourceWidget as Indexable).bundledWidgets()
             : [SourceWidget]
           ).filter((Widget:Indexable) => (
-            Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Overlay))
+            (Widget.isVisible || (Widget === SourceWidget)) &&      // see above
+            ((Widget._Pane == null) || (Widget._Pane === Overlay))
           ))
             WidgetsToShow.forEach((Widget:Indexable) => Widget._Pane = Overlay)
           this._shownWidgets = WidgetsToShow
