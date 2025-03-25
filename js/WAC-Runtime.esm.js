@@ -10203,7 +10203,7 @@ class WAC_AppletOverlayView extends Component {
         const SourceWidget = Applet.WidgetAtPath(SourceWidgetPath);
         const Visibility = (SourceWidget == null
             ? true
-            : SourceWidget.on('visibility-request')());
+            : SourceWidget.on('visibility-request')()); // an invisible SourceWidget is shown if visibility-request returns true
         if (Visibility === false) {
             return '';
         }
@@ -10249,7 +10249,8 @@ class WAC_AppletOverlayView extends Component {
         else {
             const WidgetsToShow = (SourceWidget.normalizedBehavior === 'basic_controls.outline'
                 ? SourceWidget.bundledWidgets()
-                : [SourceWidget]).filter((Widget) => (Widget.isVisible && ((Widget._Pane == null) || (Widget._Pane === Overlay))));
+                : [SourceWidget]).filter((Widget) => ((Widget.isVisible || (Widget === SourceWidget)) && // see above
+                ((Widget._Pane == null) || (Widget._Pane === Overlay))));
             WidgetsToShow.forEach((Widget) => Widget._Pane = Overlay);
             this._shownWidgets = WidgetsToShow;
         }
