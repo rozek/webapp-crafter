@@ -10738,7 +10738,7 @@ console.warn('file drop error',Signal)
         disabled=${Enabling == false} onInput=${_onInput}
       >${Options.map((Option:string) => {
           let   OptionValue = Option.replace(/:.*$/,'').trim()
-          let   OptionLabel = Option.replace(/^[^:]+:/,'').trim()
+          let   OptionLabel = Option.replace(/^[^:]*:/,'').trim() // allows for empty values
           const disabled    = (OptionLabel[0] === '-')
           if (/^[-]+$/.test(OptionLabel)) {
             return '<hr/>'
